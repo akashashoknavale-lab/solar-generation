@@ -14,7 +14,11 @@ body {
     background-color: #f4f4f4;
 }
 h1 { text-align: center; }
-.search-container { text-align: center; margin-bottom: 20px; }
+
+.search-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
 
 input {
     padding: 10px;
@@ -66,13 +70,13 @@ canvas {
 <h1>Monthly Generation Data</h1>
 
 <div class="search-container">
-    <input type="text" id="searchDate" placeholder="Enter date (e.g. 1/1/2026)">
+    <!-- ✅ CALENDAR DATE PICKER -->
+    <input type="date" id="searchDate">
     <button onclick="searchData()">Search</button>
 </div>
 
 <div id="resultMessage" class="result"></div>
 
-<!-- ✅ CHART MOVED TO TOP -->
 <canvas id="generationChart" height="120"></canvas>
 
 <table id="dataTable">
@@ -103,7 +107,7 @@ fetch(sheetURL)
     rows.slice(1).forEach(row => {
         const cols = row.split(",");
 
-        const date = cols[0].replace(/"/g, "").trim();
+        const date = cols[0].replace(/"/g, "").trim(); // e.g. 1/1/2026
         const generation = Number(cols[1].replace(/"/g, "").trim());
         const average = cols[2] ? Number(cols[2].replace(/"/g, "").trim()) : "";
 
@@ -125,7 +129,6 @@ function drawChart() {
     const values = sheetData.map(d => d.generation);
 
     const ctx = document.getElementById("generationChart").getContext("2d");
-
     if (chart) chart.destroy();
 
     chart = new Chart(ctx, {
@@ -147,9 +150,17 @@ function drawChart() {
     });
 }
 
+// ✅ CALENDAR SEARCH LOGIC
 function searchData() {
-    const inputDate = document.getElementById("searchDate").value.trim();
-    const result = sheetData.find(r => r.date === inputDate);
+    const input = document.getElementById("searchDate").value;
+    if (!input) return;
+
+    // Convert YYYY-MM-DD → D/M/YYYY
+    const d = new Date(input);
+    const formattedDate =
+        d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear();
+
+    const result = sheetData.find(r => r.date === formattedDate);
 
     document.getElementById("resultMessage").textContent =
         result
