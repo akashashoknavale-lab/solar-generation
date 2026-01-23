@@ -87,7 +87,7 @@ canvas {
 <h1>Pyramid Phase 1 Day Gen Chart</h1>
 
 <div class="search-container">
-    <input type="text" id="searchDate" placeholder="Enter date (e.g. 21/1/2026)">
+    <input type="text" id="searchDate" placeholder="Enter date (e.g. 21-1-2026)">
     <button onclick="searchData()">Search</button>
     <div id="lastMonthTotal">Last Month Total: 0 kWh</div>
 </div>
@@ -204,7 +204,7 @@ function updateLastMonthTotal() {
     if(sheetData.length === 0) return;
 
     const lastRow = sheetData[sheetData.length - 1];
-    const [lastDay, lastMonth1, lastYear] = lastRow.date.split("/").map(Number);
+    const [lastDay, lastMonth1, lastYear] = lastRow.date.split("-").map(Number);
     const lastDate = new Date(lastYear, lastMonth1 - 1, lastDay);
 
     let lastMonth = lastDate.getMonth() - 1;
@@ -216,7 +216,7 @@ function updateLastMonthTotal() {
 
     let total = 0;
     sheetData.forEach(d => {
-        const [day, month, year] = d.date.split("/").map(Number);
+        const [day, month, year] = d.date.split("-").map(Number);
         if((month - 1) === lastMonth && year === lastMonthYear){
             total += d.generation;
         }
