@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Monthly Generation Data</title>
 
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -13,7 +14,10 @@ body {
     padding: 20px;
     background-color: #f4f4f4;
 }
-h1 { text-align: center; }
+
+h1 {
+    text-align: center;
+}
 
 .search-container {
     text-align: center;
@@ -31,6 +35,10 @@ button {
     color: white;
     border: none;
     cursor: pointer;
+}
+
+button:hover {
+    background: #45a049;
 }
 
 table {
@@ -58,9 +66,9 @@ th {
 }
 
 canvas {
+    margin-top: 40px;
     background: white;
-    padding: 15px;
-    margin-bottom: 30px;
+    padding: 10px;
 }
 </style>
 </head>
@@ -70,14 +78,11 @@ canvas {
 <h1>Monthly Generation Data</h1>
 
 <div class="search-container">
-    <!-- ✅ CALENDAR DATE PICKER -->
-    <input type="date" id="searchDate">
+    <input type="text" id="searchDate" placeholder="Enter date (e.g. 1/1/2026)">
     <button onclick="searchData()">Search</button>
 </div>
 
 <div id="resultMessage" class="result"></div>
-
-<canvas id="generationChart" height="120"></canvas>
 
 <table id="dataTable">
 <thead>
@@ -89,6 +94,8 @@ canvas {
 </thead>
 <tbody></tbody>
 </table>
+
+<canvas id="generationChart" height="120"></canvas>
 
 <script>
 const sheetURL =
@@ -107,7 +114,7 @@ fetch(sheetURL)
     rows.slice(1).forEach(row => {
         const cols = row.split(",");
 
-        const date = cols[0].replace(/"/g, "").trim(); // e.g. 1/1/2026
+        const date = cols[0].replace(/"/g, "").trim();
         const generation = Number(cols[1].replace(/"/g, "").trim());
         const average = cols[2] ? Number(cols[2].replace(/"/g, "").trim()) : "";
 
@@ -122,19 +129,21 @@ fetch(sheetURL)
     });
 
     drawChart();
-});
+})
+.catch(err => console.error("Google Sheet Error:", err));
 
 function drawChart() {
     const labels = sheetData.map(d => d.date);
     const values = sheetData.map(d => d.generation);
 
     const ctx = document.getElementById("generationChart").getContext("2d");
+
     if (chart) chart.destroy();
 
     chart = new Chart(ctx, {
         type: "bar",
         data: {
-            labels,
+            labels: labels,
             datasets: [{
                 label: "Daily Generation (kWh)",
                 data: values,
@@ -144,23 +153,27 @@ function drawChart() {
         options: {
             responsive: true,
             scales: {
-                y: { beginAtZero: true }
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: "Generation (kWh)"
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: "Date"
+                    }
+                }
             }
         }
     });
 }
 
-// ✅ CALENDAR SEARCH LOGIC
 function searchData() {
-    const input = document.getElementById("searchDate").value;
-    if (!input) return;
-
-    // Convert YYYY-MM-DD → D/M/YYYY
-    const d = new Date(input);
-    const formattedDate =
-        d.getDate() + " - " + (d.getMonth() + 1) + " - " + d.getFullYear();
-
-    const result = sheetData.find(r => r.date === formattedDate);
+    const inputDate = document.getElementById("searchDate").value.trim();
+    const result = sheetData.find(r => r.date === inputDate);
 
     document.getElementById("resultMessage").textContent =
         result
