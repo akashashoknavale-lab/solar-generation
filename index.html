@@ -7,6 +7,7 @@
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 
 <style>
 body {
@@ -66,7 +67,7 @@ th {
 }
 
 canvas {
-    margin-top: 40px;
+    margin-bottom: 20px;
     background: white;
     padding: 10px;
 }
@@ -82,6 +83,8 @@ canvas {
     <button onclick="searchData()">Search</button>
 </div>
 
+<canvas id="generationChart" height="120"></canvas>
+
 <div id="resultMessage" class="result"></div>
 
 <table id="dataTable">
@@ -94,8 +97,6 @@ canvas {
 </thead>
 <tbody></tbody>
 </table>
-
-<canvas id="generationChart" height="120"></canvas>
 
 <script>
 const sheetURL =
@@ -119,18 +120,23 @@ fetch(sheetURL)
         const average = cols[2] ? Number(cols[2].replace(/"/g, "").trim()) : "";
 
         sheetData.push({ date, generation, average });
-
-        tbody.innerHTML += `
-        <tr>
-            <td>${date}</td>
-            <td>${generation}</td>
-            <td>${average}</td>
-        </tr>`;
     });
 
+    populateTable();
     drawChart();
 })
 .catch(err => console.error("Google Sheet Error:", err));
+
+function populateTable() {
+    const tbody = document.querySelector("#dataTable tbody");
+    tbody.innerHTML = sheetData.map(d => `
+        <tr>
+            <td>${d.date}</td>
+            <td>${d.generation}</td>
+            <td>${d.average}</td>
+        </tr>
+    `).join("");
+}
 
 function drawChart() {
     const labels = sheetData.map(d => d.date);
@@ -147,27 +153,34 @@ function drawChart() {
             datasets: [{
                 label: "Daily Generation (kWh)",
                 data: values,
+                backgroundColor: "rgba(75, 192, 192, 0.6)",
+                borderColor: "rgba(75, 192, 192, 1)",
                 borderWidth: 1
             }]
         },
         options: {
             responsive: true,
+            plugins: {
+                legend: { display: false },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'end',
+                    color: '#000',
+                    font: { weight: 'bold' },
+                    formatter: function(value) { return value; }
+                }
+            },
             scales: {
                 y: {
                     beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: "Generation (kWh)"
-                    }
+                    title: { display: true, text: "Generation (kWh)" }
                 },
                 x: {
-                    title: {
-                        display: true,
-                        text: "Date"
-                    }
+                    title: { display: true, text: "Date" }
                 }
             }
-        }
+        },
+        plugins: [ChartDataLabels]
     });
 }
 
