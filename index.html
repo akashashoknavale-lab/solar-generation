@@ -149,19 +149,24 @@ function drawChart(highlightDate = null) {
         d.date === highlightDate ? "rgba(255, 99, 132, 0.8)" : "rgba(75, 192, 192, 0.6)"
     );
 
-    // Calculate totals for last month and current month
-    const today = new Date();
-    const currentMonth = today.getMonth(); // 0-11
-    const currentYear = today.getFullYear();
-    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    // Determine last date in the dataset
+    const lastDateParts = last30Data[last30Data.length - 1].date.split("/").map(Number);
+    const lastDataDate = new Date(lastDateParts[2], lastDateParts[1] - 1, lastDateParts[0]);
 
+    // Define current month and last month relative to lastDataDate
+    const currentMonth = lastDataDate.getMonth();
+    const currentYear = lastDataDate.getFullYear();
+    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+    // Calculate totals
     let currentMonthTotal = 0;
     let lastMonthTotal = 0;
 
     last30Data.forEach(d => {
-        const [day, month, year] = d.date.split("/").map(Number); // d/m/yyyy
+        const [day, month, year] = d.date.split("/").map(Number);
         if (year === currentYear && month - 1 === currentMonth) currentMonthTotal += d.generation;
-        if ((year === currentYear && month - 1 === lastMonth) || (month - 1 === lastMonth && year === currentYear - 1)) lastMonthTotal += d.generation;
+        if (year === lastMonthYear && month - 1 === lastMonth) lastMonthTotal += d.generation;
     });
 
     const ctx = document.getElementById("generationChart").getContext("2d");
