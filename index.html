@@ -15,10 +15,7 @@ body {
     padding: 20px;
     background-color: #f4f4f4;
 }
-
-h1 {
-    text-align: center;
-}
+h1 { text-align: center; }
 
 .search-container {
     display: flex;
@@ -26,11 +23,12 @@ h1 {
     align-items: center;
     margin-bottom: 20px;
     gap: 20px;
+    flex-wrap: wrap;
 }
 
 input {
     padding: 10px;
-    width: 250px;
+    width: 220px;
 }
 
 button {
@@ -40,12 +38,9 @@ button {
     border: none;
     cursor: pointer;
 }
+button:hover { background: #45a049; }
 
-button:hover {
-    background: #45a049;
-}
-
-#lastMonthTotal {
+#lastMonthTotal, #currentMonthTotal {
     font-weight: bold;
     font-size: 16px;
 }
@@ -89,7 +84,9 @@ canvas {
 <div class="search-container">
     <input type="text" id="searchDate" placeholder="Enter date (e.g. 21-1-2026)">
     <button onclick="searchData()">Search</button>
+
     <div id="lastMonthTotal">Last Month Total: 0 kWh</div>
+    <div id="currentMonthTotal">Current Month Total: 0 kWh</div>
 </div>
 
 <canvas id="generationChart" height="120"></canvas>
@@ -100,8 +97,8 @@ canvas {
 <thead>
 <tr>
     <th>Date</th>
-    <th>Generation</th>
-    <th>Average/KWp</th>
+    <th>Generation (kWh)</th>
+    <th>Average / kWp</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -113,13 +110,13 @@ const sheetURL = "https://docs.google.com/spreadsheets/d/1ol61rCN9yLUSVHekPz9S5W
 let sheetData = [];
 let chart;
 
-// Fetch Google Sheet CSV data
+// Fetch Google Sheet data
 fetch(sheetURL)
 .then(res => res.text())
 .then(csv => {
     const rows = csv.trim().split("\n");
     rows.slice(1).forEach(row => {
-        const cols = row.split(",");
+        const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
 
         const date = cols[0].replace(/"/g, "").trim();
         const generation = Number(cols[1].replace(/"/g, "").trim());
@@ -130,7 +127,7 @@ fetch(sheetURL)
 
     populateTable();
     drawChart();
-    updateLastMonthTotal();
+    updateMonthTotals();
 })
 .catch(err => console.error("Google Sheet Error:", err));
 
@@ -141,12 +138,12 @@ function populateTable() {
         <tr>
             <td>${d.date}</td>
             <td>${d.generation}</td>
-            <td>${d.average}</td>
+            <td>${d.average || "-"}</td>
         </tr>
     `).join("");
 }
 
-// Draw chart
+// Draw chart (last 30 entries)
 function drawChart(highlightDate = null) {
     const last30Data = sheetData.slice(-30);
 
@@ -154,7 +151,9 @@ function drawChart(highlightDate = null) {
     const values = last30Data.map(d => d.generation);
 
     const backgroundColors = last30Data.map(d =>
-        d.date === highlightDate ? "rgba(255, 99, 132, 0.8)" : "rgba(75, 192, 192, 0.6)"
+        d.date === highlightDate
+            ? "rgba(255, 99, 132, 0.8)"
+            : "rgba(75, 192, 192, 0.6)"
     );
 
     const ctx = document.getElementById("generationChart").getContext("2d");
@@ -164,12 +163,10 @@ function drawChart(highlightDate = null) {
     chart = new Chart(ctx, {
         type: "bar",
         data: {
-            labels: labels,
+            labels,
             datasets: [{
-                label: "Daily Generation (kWh)",
                 data: values,
                 backgroundColor: backgroundColors,
-                borderColor: "rgba(75, 192, 192, 1)",
                 borderWidth: 1
             }]
         },
@@ -181,8 +178,7 @@ function drawChart(highlightDate = null) {
                     anchor: 'end',
                     align: 'end',
                     color: '#000',
-                    font: { weight: 'bold' },
-                    formatter: value => value
+                    font: { weight: 'bold' }
                 }
             },
             scales: {
@@ -199,40 +195,53 @@ function drawChart(highlightDate = null) {
     });
 }
 
-// Calculate last month total based on last date in sheet
-function updateLastMonthTotal() {
+// Calculate Last Month & Current Month totals
+function updateMonthTotals() {
     if(sheetData.length === 0) return;
 
     const lastRow = sheetData[sheetData.length - 1];
-    const [lastDay, lastMonth1, lastYear] = lastRow.date.split("-").map(Number);
-    const lastDate = new Date(lastYear, lastMonth1 - 1, lastDay);
+    const [d, m, y] = lastRow.date.split("-").map(Number);
+    const refDate = new Date(y, m - 1, d);
 
-    let lastMonth = lastDate.getMonth() - 1;
-    let lastMonthYear = lastDate.getFullYear();
+    let lastMonth = refDate.getMonth() - 1;
+    let lastMonthYear = refDate.getFullYear();
     if(lastMonth < 0){
         lastMonth = 11;
         lastMonthYear -= 1;
     }
 
-    let total = 0;
-    sheetData.forEach(d => {
-        const [day, month, year] = d.date.split("-").map(Number);
-        if((month - 1) === lastMonth && year === lastMonthYear){
-            total += d.generation;
+    let currentMonth = refDate.getMonth();
+    let currentMonthYear = refDate.getFullYear();
+
+    let lastMonthTotal = 0;
+    let currentMonthTotal = 0;
+
+    sheetData.forEach(r => {
+        const [day, month, year] = r.date.split("-").map(Number);
+
+        if(month - 1 === lastMonth && year === lastMonthYear){
+            lastMonthTotal += r.generation;
+        }
+
+        if(month - 1 === currentMonth && year === currentMonthYear){
+            currentMonthTotal += r.generation;
         }
     });
 
-    document.getElementById("lastMonthTotal").textContent = `Last Month Total: ${total} kWh`;
+    document.getElementById("lastMonthTotal").textContent =
+        `Last Month Total: ${lastMonthTotal} kWh`;
+
+    document.getElementById("currentMonthTotal").textContent =
+        `Current Month Total: ${currentMonthTotal} kWh`;
 }
 
-// Search and highlight
+// Search by date
 function searchData() {
     const inputDate = document.getElementById("searchDate").value.trim();
     const result = sheetData.find(r => r.date === inputDate);
 
-    document.getElementById("resultMessage").textContent =
-        result
-        ? `Generation = ${result.generation}, Avg/KWp = ${result.average}`
+    document.getElementById("resultMessage").textContent = result
+        ? `Generation: ${result.generation} kWh | Avg/KWp: ${result.average || "-"}`
         : "No data found for selected date";
 
     drawChart(result ? result.date : null);
