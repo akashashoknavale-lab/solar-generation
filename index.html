@@ -99,19 +99,16 @@ canvas {
 </table>
 
 <script>
-const sheetURL =
-"https://docs.google.com/spreadsheets/d/1ol61rCN9yLUSVHekPz9S5W7yEfWQTTas8-yJtxKf1ys/gviz/tq?tqx=out:csv&sheet=Tab";
+const sheetURL = "https://docs.google.com/spreadsheets/d/1ol61rCN9yLUSVHekPz9S5W7yEfWQTTas8-yJtxKf1ys/gviz/tq?tqx=out:csv&sheet=Tab";
 
 let sheetData = [];
 let chart;
 
+// Fetch Google Sheet CSV data
 fetch(sheetURL)
 .then(res => res.text())
 .then(csv => {
     const rows = csv.trim().split("\n");
-    const tbody = document.querySelector("#dataTable tbody");
-    tbody.innerHTML = "";
-
     rows.slice(1).forEach(row => {
         const cols = row.split(",");
 
@@ -127,6 +124,7 @@ fetch(sheetURL)
 })
 .catch(err => console.error("Google Sheet Error:", err));
 
+// Populate table
 function populateTable() {
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = sheetData.map(d => `
@@ -138,9 +136,33 @@ function populateTable() {
     `).join("");
 }
 
-function drawChart() {
-    const labels = sheetData.map(d => d.date);
-    const values = sheetData.map(d => d.generation);
+// Draw chart
+function drawChart(highlightDate = null) {
+    // Limit to last 30 records
+    const last30Data = sheetData.slice(-30);
+
+    const labels = last30Data.map(d => d.date);
+    const values = last30Data.map(d => d.generation);
+
+    // Highlight searched date
+    const backgroundColors = last30Data.map(d =>
+        d.date === highlightDate ? "rgba(255, 99, 132, 0.8)" : "rgba(75, 192, 192, 0.6)"
+    );
+
+    // Calculate totals for last month and current month
+    const today = new Date();
+    const currentMonth = today.getMonth(); // 0-11
+    const currentYear = today.getFullYear();
+    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+
+    let currentMonthTotal = 0;
+    let lastMonthTotal = 0;
+
+    last30Data.forEach(d => {
+        const [day, month, year] = d.date.split("/").map(Number); // d/m/yyyy
+        if (year === currentYear && month - 1 === currentMonth) currentMonthTotal += d.generation;
+        if ((year === currentYear && month - 1 === lastMonth) || (month - 1 === lastMonth && year === currentYear - 1)) lastMonthTotal += d.generation;
+    });
 
     const ctx = document.getElementById("generationChart").getContext("2d");
 
@@ -153,7 +175,7 @@ function drawChart() {
             datasets: [{
                 label: "Daily Generation (kWh)",
                 data: values,
-                backgroundColor: "rgba(75, 192, 192, 0.6)",
+                backgroundColor: backgroundColors,
                 borderColor: "rgba(75, 192, 192, 1)",
                 borderWidth: 1
             }]
@@ -167,7 +189,18 @@ function drawChart() {
                     align: 'end',
                     color: '#000',
                     font: { weight: 'bold' },
-                    formatter: function(value) { return value; }
+                    formatter: value => value
+                },
+                tooltip: { enabled: true },
+                // Top-right totals
+                beforeDraw: chart => {
+                    const { ctx, chartArea: { top, right } } = chart;
+                    ctx.save();
+                    ctx.font = 'bold 14px Arial';
+                    ctx.fillStyle = '#000';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(`Last Month: ${lastMonthTotal} | Current Month: ${currentMonthTotal}`, right - 10, top + 20);
+                    ctx.restore();
                 }
             },
             scales: {
@@ -184,6 +217,7 @@ function drawChart() {
     });
 }
 
+// Search and highlight
 function searchData() {
     const inputDate = document.getElementById("searchDate").value.trim();
     const result = sheetData.find(r => r.date === inputDate);
@@ -192,6 +226,8 @@ function searchData() {
         result
         ? `Generation = ${result.generation}, Avg/KWp = ${result.average}`
         : "No data found for selected date";
+
+    drawChart(result ? result.date : null);
 }
 </script>
 
