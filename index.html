@@ -27,13 +27,9 @@ th { background: #4CAF50; color: white; }
 <h1>Monthly Generation Data</h1>
 
 <div class="search-container">
-    <input type="date" id="searchDate">
-    <button onclick="searchData()">Search Day</button>
-    <br><br>
-    <input type="month" id="monthPicker">
-    <button onclick="calculateMonthlyTotal()">Get Monthly Total</button>
+    <input type="text" id="searchDate" placeholder="Enter date (e.g. 1/1/2026)">
+    <button onclick="searchData()">Search</button>
 </div>
-
 
 <div id="resultMessage" class="result"></div>
 
@@ -64,16 +60,13 @@ fetch(sheetURL)
     rows.slice(1).forEach(row => {
         const cols = row.split(",");
 
+        // 🔹 Normalize date (remove time if any)
         let rawDate = cols[0].replace(/"/g, "").trim();
-        let cleanDate = rawDate.split(" ")[0]; // 1/1/2026
-
-        const parts = cleanDate.split("/");
-        const isoDate = `${parts[2]}-${parts[1].padStart(2,"0")}-${parts[0].padStart(2,"0")}`;
+        let cleanDate = rawDate.split(" ")[0];
 
         const data = {
-            displayDate: cleanDate,
-            isoDate: isoDate,
-            generation: Number(cols[1]),
+            date: cleanDate,
+            generation: cols[1],
             average: cols[2] || ""
         };
 
@@ -81,46 +74,24 @@ fetch(sheetURL)
 
         tbody.innerHTML += `
         <tr>
-            <td>${data.displayDate}</td>
+            <td>${cleanDate}</td>
             <td>${data.generation}</td>
             <td>${data.average}</td>
         </tr>`;
     });
-});
+})
+.catch(err => console.error("Sheet error:", err));
 
-// 🔍 Single day search
 function searchData() {
-    const inputDate = document.getElementById("searchDate").value;
-    const result = sheetData.find(r => r.isoDate === inputDate);
+    const inputDate = document.getElementById("searchDate").value.trim();
+    const result = sheetData.find(r => r.date === inputDate);
 
     document.getElementById("resultMessage").textContent =
         result
-        ? `Date: ${result.displayDate} | Generation: ${result.generation} | Avg/KWp: ${result.average}`
+        ? `Generation = ${result.generation}, Avg/KWp = ${result.average}`
         : "No data found for selected date";
 }
-
-// 📆 Monthly total
-function calculateMonthlyTotal() {
-    const selectedMonth = document.getElementById("monthPicker").value;
-    if (!selectedMonth) {
-        document.getElementById("resultMessage").textContent =
-            "Please select a month";
-        return;
-    }
-
-    let total = 0;
-
-    sheetData.forEach(row => {
-        if (row.isoDate.startsWith(selectedMonth)) {
-            total += row.generation;
-        }
-    });
-
-    document.getElementById("resultMessage").textContent =
-        `Total generation for ${selectedMonth}: ${total.toFixed(2)} units`;
-}
 </script>
-
 
 
 </body>
