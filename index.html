@@ -60,50 +60,39 @@ fetch(sheetURL)
     rows.slice(1).forEach(row => {
         const cols = row.split(",");
 
+        // 🔹 Normalize date (remove time if any)
         let rawDate = cols[0].replace(/"/g, "").trim();
-        let cleanDate = rawDate.split(" ")[0]; // remove time
+        let cleanDate = rawDate.split(" ")[0];
 
         const data = {
-            date: cleanDate,          // 1/1/2026
-            generation: Number(cols[1])
+            date: cleanDate,
+            generation: cols[1],
+            average: cols[2] || ""
         };
 
         sheetData.push(data);
 
         tbody.innerHTML += `
         <tr>
-            <td>${data.date}</td>
+            <td>${cleanDate}</td>
             <td>${data.generation}</td>
-            <td></td>
+            <td>${data.average}</td>
         </tr>`;
     });
-});
+})
+.catch(err => console.error("Sheet error:", err));
 
-function calculateMonthlyTotal() {
-    const selectedMonth = document.getElementById("monthPicker").value;
-    if (!selectedMonth) {
-        document.getElementById("resultMessage").textContent =
-            "Please select a month";
-        return;
-    }
-
-    let total = 0;
-
-    sheetData.forEach(row => {
-        const parts = row.date.split("/"); 
-        const month = parts[0].padStart(2, "0");
-        const year = parts[2];
-
-        const rowMonth = `${year}-${month}`;
-
-        if (rowMonth === selectedMonth) {
-            total += row.generation;
-        }
-    });
+function searchData() {
+    const inputDate = document.getElementById("searchDate").value.trim();
+    const result = sheetData.find(r => r.date === inputDate);
 
     document.getElementById("resultMessage").textContent =
-        `Total generation for ${selectedMonth}: ${total.toFixed(2)} units`;
+        result
+        ? `Generation = ${result.generation}, Avg/KWp = ${result.average}`
+        : "No data found for selected date";
 }
 </script>
+
+
 </body>
 </html>
