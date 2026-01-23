@@ -203,17 +203,23 @@ function drawChart(highlightDate = null) {
 function updateLastMonthTotal() {
     if(sheetData.length === 0) return;
 
-    const last30Data = sheetData.slice(-30);
-    const lastDateParts = last30Data[last30Data.length - 1].date.split("/").map(Number);
-    const lastDataDate = new Date(lastDateParts[2], lastDateParts[1] - 1, lastDateParts[0]);
+    const lastRow = sheetData[sheetData.length - 1];
+    const [lastDay, lastMonth1, lastYear] = lastRow.date.split("/").map(Number);
+    const lastDate = new Date(lastYear, lastMonth1 - 1, lastDay);
 
-    const lastMonth = lastDataDate.getMonth() === 0 ? 11 : lastDataDate.getMonth() - 1;
-    const lastMonthYear = lastDataDate.getMonth() === 0 ? lastDataDate.getFullYear() - 1 : lastDataDate.getFullYear();
+    let lastMonth = lastDate.getMonth() - 1;
+    let lastMonthYear = lastDate.getFullYear();
+    if(lastMonth < 0){
+        lastMonth = 11;
+        lastMonthYear -= 1;
+    }
 
     let total = 0;
-    last30Data.forEach(d => {
+    sheetData.forEach(d => {
         const [day, month, year] = d.date.split("/").map(Number);
-        if(month - 1 === lastMonth && year === lastMonthYear) total += d.generation;
+        if((month - 1) === lastMonth && year === lastMonthYear){
+            total += d.generation;
+        }
     });
 
     document.getElementById("lastMonthTotal").textContent = `Last Month Total: ${total} kWh`;
