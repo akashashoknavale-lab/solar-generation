@@ -21,8 +21,11 @@ h1 {
 }
 
 .search-container {
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     margin-bottom: 20px;
+    gap: 20px;
 }
 
 input {
@@ -40,6 +43,11 @@ button {
 
 button:hover {
     background: #45a049;
+}
+
+#lastMonthTotal {
+    font-weight: bold;
+    font-size: 16px;
 }
 
 table {
@@ -81,6 +89,7 @@ canvas {
 <div class="search-container">
     <input type="text" id="searchDate" placeholder="Enter date (e.g. 1/1/2026)">
     <button onclick="searchData()">Search</button>
+    <div id="lastMonthTotal">Last Month Total: 0 kWh</div>
 </div>
 
 <canvas id="generationChart" height="120"></canvas>
@@ -121,6 +130,7 @@ fetch(sheetURL)
 
     populateTable();
     drawChart();
+    updateLastMonthTotal();
 })
 .catch(err => console.error("Google Sheet Error:", err));
 
@@ -138,36 +148,14 @@ function populateTable() {
 
 // Draw chart
 function drawChart(highlightDate = null) {
-    // Limit to last 30 records
     const last30Data = sheetData.slice(-30);
 
     const labels = last30Data.map(d => d.date);
     const values = last30Data.map(d => d.generation);
 
-    // Highlight searched date
     const backgroundColors = last30Data.map(d =>
         d.date === highlightDate ? "rgba(255, 99, 132, 0.8)" : "rgba(75, 192, 192, 0.6)"
     );
-
-    // Determine last date in the dataset
-    const lastDateParts = last30Data[last30Data.length - 1].date.split("/").map(Number);
-    const lastDataDate = new Date(lastDateParts[2], lastDateParts[1] - 1, lastDateParts[0]);
-
-    // Define current month and last month relative to lastDataDate
-    const currentMonth = lastDataDate.getMonth();
-    const currentYear = lastDataDate.getFullYear();
-    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-    const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-
-    // Calculate totals
-    let currentMonthTotal = 0;
-    let lastMonthTotal = 0;
-
-    last30Data.forEach(d => {
-        const [day, month, year] = d.date.split("/").map(Number);
-        if (year === currentYear && month - 1 === currentMonth) currentMonthTotal += d.generation;
-        if (year === lastMonthYear && month - 1 === lastMonth) lastMonthTotal += d.generation;
-    });
 
     const ctx = document.getElementById("generationChart").getContext("2d");
 
@@ -195,17 +183,6 @@ function drawChart(highlightDate = null) {
                     color: '#000',
                     font: { weight: 'bold' },
                     formatter: value => value
-                },
-                tooltip: { enabled: true },
-                // Top-right totals
-                beforeDraw: chart => {
-                    const { ctx, chartArea: { top, right } } = chart;
-                    ctx.save();
-                    ctx.font = 'bold 14px Arial';
-                    ctx.fillStyle = '#000';
-                    ctx.textAlign = 'right';
-                    ctx.fillText(`Last Month: ${lastMonthTotal} | Current Month: ${currentMonthTotal}`, right - 10, top + 20);
-                    ctx.restore();
                 }
             },
             scales: {
@@ -220,6 +197,26 @@ function drawChart(highlightDate = null) {
         },
         plugins: [ChartDataLabels]
     });
+}
+
+// Calculate last month total based on last date in sheet
+function updateLastMonthTotal() {
+    if(sheetData.length === 0) return;
+
+    const last30Data = sheetData.slice(-30);
+    const lastDateParts = last30Data[last30Data.length - 1].date.split("/").map(Number);
+    const lastDataDate = new Date(lastDateParts[2], lastDateParts[1] - 1, lastDateParts[0]);
+
+    const lastMonth = lastDataDate.getMonth() === 0 ? 11 : lastDataDate.getMonth() - 1;
+    const lastMonthYear = lastDataDate.getMonth() === 0 ? lastDataDate.getFullYear() - 1 : lastDataDate.getFullYear();
+
+    let total = 0;
+    last30Data.forEach(d => {
+        const [day, month, year] = d.date.split("/").map(Number);
+        if(month - 1 === lastMonth && year === lastMonthYear) total += d.generation;
+    });
+
+    document.getElementById("lastMonthTotal").textContent = `Last Month Total: ${total} kWh`;
 }
 
 // Search and highlight
