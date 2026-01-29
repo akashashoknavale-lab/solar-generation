@@ -1,250 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pyramid Phase-1 Day Gen and Avg/KWp</title>
+    <meta charset="UTF-8">
+    <title>Solar Dashboard Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
 
-<style>
-body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    background-color: #f4f4f4;
-}
-h1 { text-align: center; }
+        .login-box {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 280px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
 
-.search-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 20px;
-    gap: 20px;
-    flex-wrap: wrap;
-}
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
 
-input {
-    padding: 10px;
-    width: 220px;
-}
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
 
-button {
-    padding: 10px 20px;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    cursor: pointer;
-}
-button:hover { background: #45a049; }
+        button {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
 
-#lastMonthTotal, #currentMonthTotal {
-    font-weight: bold;
-    font-size: 16px;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background: white;
-}
-
-th, td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: center;
-}
-
-th {
-    background: #4CAF50;
-    color: white;
-}
-
-.result {
-    margin-top: 20px;
-    text-align: center;
-    font-size: 18px;
-}
-
-canvas {
-    margin-bottom: 20px;
-    background: white;
-    padding: 10px;
-}
-</style>
+        .error {
+            color: red;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
 </head>
-
 <body>
 
-<h1>Pyramid Phase 1 Day Gen Chart</h1>
+<div class="login-box">
+    <h2>🔐 Login</h2>
 
-<div class="search-container">
-    <input type="text" id="searchDate" placeholder="Enter date (e.g. 21-1-2026)">
-    <button onclick="searchData()">Search</button>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
 
-    <div id="lastMonthTotal">Last Month Total: 0 kWh</div>
-    <div id="currentMonthTotal">Current Month Total: 0 kWh</div>
+    <button onclick="login()">Login</button>
+
+    <div class="error" id="error"></div>
 </div>
 
-<canvas id="generationChart" height="120"></canvas>
-
-<div id="resultMessage" class="result"></div>
-
-<table id="dataTable">
-<thead>
-<tr>
-    <th>Date</th>
-    <th>Generation (kWh)</th>
-    <th>Average / kWp</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-
 <script>
-const sheetURL = "https://docs.google.com/spreadsheets/d/1ol61rCN9yLUSVHekPz9S5W7yEfWQTTas8-yJtxKf1ys/gviz/tq?tqx=out:csv&sheet=Tab";
+function login() {
+    const user = document.getElementById("username").value;
+    const pass = document.getElementById("password").value;
 
-let sheetData = [];
-let chart;
-
-// Fetch Google Sheet data
-fetch(sheetURL)
-.then(res => res.text())
-.then(csv => {
-    const rows = csv.trim().split("\n");
-    rows.slice(1).forEach(row => {
-        const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-
-        const date = cols[0].replace(/"/g, "").trim();
-        const generation = Number(cols[1].replace(/"/g, "").trim());
-        const average = cols[2] ? Number(cols[2].replace(/"/g, "").trim()) : "";
-
-        sheetData.push({ date, generation, average });
-    });
-
-    populateTable();
-    drawChart();
-    updateMonthTotals();
-})
-.catch(err => console.error("Google Sheet Error:", err));
-
-// Populate table
-function populateTable() {
-    const tbody = document.querySelector("#dataTable tbody");
-    tbody.innerHTML = sheetData.map(d => `
-        <tr>
-            <td>${d.date}</td>
-            <td>${d.generation}</td>
-            <td>${d.average || "-"}</td>
-        </tr>
-    `).join("");
-}
-
-// Draw chart (last 30 entries)
-function drawChart(highlightDate = null) {
-    const last30Data = sheetData.slice(-30);
-
-    const labels = last30Data.map(d => d.date);
-    const values = last30Data.map(d => d.generation);
-
-    const backgroundColors = last30Data.map(d =>
-        d.date === highlightDate
-            ? "rgba(255, 99, 132, 0.8)"
-            : "rgba(75, 192, 192, 0.6)"
-    );
-
-    const ctx = document.getElementById("generationChart").getContext("2d");
-
-    if (chart) chart.destroy();
-
-    chart = new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels,
-            datasets: [{
-                data: values,
-                backgroundColor: backgroundColors,
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    anchor: 'end',
-                    align: 'end',
-                    color: '#000',
-                    font: { weight: 'bold' }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: { display: true, text: "Generation (kWh)" }
-                },
-                x: {
-                    title: { display: true, text: "Date" }
-                }
-            }
-        },
-        plugins: [ChartDataLabels]
-    });
-}
-
-// Calculate Last Month & Current Month totals
-function updateMonthTotals() {
-    if(sheetData.length === 0) return;
-
-    const lastRow = sheetData[sheetData.length - 1];
-    const [d, m, y] = lastRow.date.split("-").map(Number);
-    const refDate = new Date(y, m - 1, d);
-
-    let lastMonth = refDate.getMonth() - 1;
-    let lastMonthYear = refDate.getFullYear();
-    if(lastMonth < 0){
-        lastMonth = 11;
-        lastMonthYear -= 1;
+    // 🔑 change credentials here
+    if (user === "admin" && pass === "solar123") {
+        localStorage.setItem("loggedIn", "true");
+        window.location.href = "dashboard.html";
+    } else {
+        document.getElementById("error").innerText = "Invalid username or password";
     }
-
-    let currentMonth = refDate.getMonth();
-    let currentMonthYear = refDate.getFullYear();
-
-    let lastMonthTotal = 0;
-    let currentMonthTotal = 0;
-
-    sheetData.forEach(r => {
-        const [day, month, year] = r.date.split("-").map(Number);
-
-        if(month - 1 === lastMonth && year === lastMonthYear){
-            lastMonthTotal += r.generation;
-        }
-
-        if(month - 1 === currentMonth && year === currentMonthYear){
-            currentMonthTotal += r.generation;
-        }
-    });
-
-    document.getElementById("lastMonthTotal").textContent =
-        `Last Month Total: ${lastMonthTotal} kWh`;
-
-    document.getElementById("currentMonthTotal").textContent =
-        `Current Month Total: ${currentMonthTotal} kWh`;
-}
-
-// Search by date
-function searchData() {
-    const inputDate = document.getElementById("searchDate").value.trim();
-    const result = sheetData.find(r => r.date === inputDate);
-
-    document.getElementById("resultMessage").textContent = result
-        ? `Generation: ${result.generation} kWh | Avg/KWp: ${result.average || "-"}`
-        : "No data found for selected date";
-
-    drawChart(result ? result.date : null);
 }
 </script>
 
