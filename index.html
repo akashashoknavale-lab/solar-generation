@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
     if (localStorage.getItem("loggedIn") !== "true") {
-        window.location.href = "index.html";
+        window.location.href = "dashboard.html";
     }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -24,7 +24,7 @@
     <script>
         function logout() {
             localStorage.removeItem("loggedIn");
-            window.location.href = "index.html";
+            window.location.href = "dashboard.html";
         }
     </script>
 
@@ -654,8 +654,8 @@
                         anchor: "center",
                         align: "center",
                         rotation: (ctx) => {
-                            const angle = ctx.chart.getDatasetMeta(0).data[ctx.dataIndex].startAngle +
-                                          ctx.chart.getDatasetMeta(0).data[ctx.dataIndex].circumference / 2;
+                            const angle = ctx.chart.getDatasetMeta(0).data[ctx.data].startAngle +
+                                          ctx.chart.getDatasetMeta(0).data[ctx.data].circumference / 2;
                             return angle * (180 / Math.PI); // rotate text toward center
                         },
                         formatter: (value, ctx) => {
