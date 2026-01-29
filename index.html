@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
 
     <style>
         body {
@@ -371,6 +372,14 @@
     </div>
 
     <script>
+        // ---- LOGIN CHECK ----
+        const role = localStorage.getItem("role");
+        const allowedPlants = localStorage.getItem("plants");
+        
+        if(!role){
+            window.location.href = "login.html";
+        }
+
         const SHEET_ID = "1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg";
         const GID = "0";
 
@@ -405,10 +414,18 @@
                 updateView();
             });
 
-        function createFilters() {
-            [...new Set(allData.map(r => r[PLANT_COL]))].forEach(p => addCheckbox("plantFilter", p, selectedPlants));
-            [...new Set(allData.map(r => r[MONTH_COL]))].forEach(m => addCheckbox("monthFilter", m, selectedMonths));
-        }
+       function createFilters() {
+       let plants = [...new Set(allData.map(r => r[PLANT_COL]))];
+            
+       if(role === "customer" && allowedPlants !== "ALL"){
+                    const allowed = allowedPlants.split(",").map(p=>p.trim());
+                    plants = plants.filter(p => allowed.includes(p));
+                }
+            
+                plants.forEach(p => addCheckbox("plantFilter", p, selectedPlants));
+                [...new Set(allData.map(r => r[MONTH_COL]))].forEach(m => addCheckbox("monthFilter", m, selectedMonths));
+                }
+
 
         function addCheckbox(id, val, set) {
             const l = document.createElement("label");
