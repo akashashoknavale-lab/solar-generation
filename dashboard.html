@@ -75,7 +75,7 @@ function login() {
     // 🔑 change credentials here
     if (user === "admin" && pass === "solar123") {
         localStorage.setItem("loggedIn", "true");
-        window.location.href = "dashboard.html";
+        window.location.href = "index.html";
     } else {
         document.getElementById("error").innerText = "Invalid username or password";
     }
