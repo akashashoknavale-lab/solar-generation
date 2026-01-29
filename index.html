@@ -8,6 +8,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
+    <button onclick="logout()" style="font-size:12px">Logout</button>
 
     <style>
         body {
@@ -378,6 +379,10 @@
         
         if(!role){
             window.location.href = "login.html";
+        }
+        function logout(){
+        localStorage.clear();
+        window.location.href = "login.html";
         }
 
         const SHEET_ID = "1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg";
