@@ -68,19 +68,37 @@
 </div>
 
 <script>
-function login() {
-    const user = document.getElementById("username").value;
-    const pass = document.getElementById("password").value;
+const USER_SHEET_ID = "YOUR_SHEET_ID";
+const USER_GID = "USERS_SHEET_GID"; // gid of Users sheet
 
-    // 🔑 change credentials here
-    if (user === "admin" && pass === "solar123") {
-        localStorage.setItem("loggedIn", "true");
-        window.location.href = "index.html";
-    } else {
-        document.getElementById("error").innerText = "Invalid username or password";
-    }
+function login() {
+    const user = document.getElementById("username").value.trim();
+    const pass = document.getElementById("password").value.trim();
+
+    fetch(`https://docs.google.com/spreadsheets/d/${USER_SHEET_ID}/export?format=csv&gid=${USER_GID}`)
+        .then(res => res.text())
+        .then(csv => {
+            const rows = csv.split("\n").map(r => r.split(",").map(c => c.replace(/"/g,"").trim()));
+            rows.shift(); // remove header
+
+            const found = rows.find(r => r[0] === user && r[1] === pass);
+
+            if (!found) {
+                document.getElementById("error").innerText = "Invalid login";
+                return;
+            }
+
+            // Save session
+            localStorage.setItem("loggedIn", "true");
+            localStorage.setItem("username", found[0]);
+            localStorage.setItem("role", found[2]);
+            localStorage.setItem("plants", found[3]);
+
+            window.location.href = "index.html";
+        });
 }
 </script>
+
 
 </body>
 </html>
