@@ -1,104 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Solar Dashboard Login</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f2f2f2;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        .login-box {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            width: 280px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 12px;
-            font-size: 13px;
-        }
-
-        button {
-            width: 100%;
-            padding: 8px;
-            font-size: 14px;
-            background: #4caf50;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-        .error {
-            color: red;
-            font-size: 12px;
-            text-align: center;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-
-<div class="login-box">
-    <h2>🔐 Login</h2>
-
-    <input type="text" id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
-
-    <button onclick="login()">Login</button>
-
-    <div class="error" id="error"></div>
-</div>
+<style>
+body{font-family:Arial;background:#f4f4f4;padding:15px}
+.topbar{display:flex;justify-content:space-between;align-items:center}
+button{padding:5px 10px;cursor:pointer}
+table{border-collapse:collapse;width:100%;margin-top:10px;background:#fff}
+th,td{border:1px solid #ccc;padding:6px;font-size:12px;text-align:center}
+</style>
 
 <script>
-const USER_SHEET_ID = "YOUR_SHEET_ID";
-const USER_GID = "USERS_SHEET_GID"; // gid of Users sheet
-
-function login() {
-    const user = document.getElementById("username").value.trim();
-    const pass = document.getElementById("password").value.trim();
-
-    fetch(`https://docs.google.com/spreadsheets/d/${USER_SHEET_ID}/export?format=csv&gid=${USER_GID}`)
-        .then(res => res.text())
-        .then(csv => {
-            const rows = csv.split("\n").map(r => r.split(",").map(c => c.replace(/"/g,"").trim()));
-            rows.shift(); // remove header
-
-            const found = rows.find(r => r[0] === user && r[1] === pass);
-
-            if (!found) {
-                document.getElementById("error").innerText = "Invalid login";
-                return;
-            }
-
-            // Save session
-            localStorage.setItem("loggedIn", "true");
-            localStorage.setItem("username", found[0]);
-            localStorage.setItem("role", found[2]);
-            localStorage.setItem("plants", found[3]);
-
-            window.location.href = "index.html";
-        });
+/* 🔐 AUTH CHECK */
+if(localStorage.getItem("loggedIn") !== "true"){
+    window.location.href = "index.html";
 }
 </script>
+</head>
 
+<body>
+
+<div class="topbar">
+    <h2>Solar Plant Dashboard</h2>
+    <div>
+        <span id="userInfo"></span>
+        <button onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<table id="summaryTable">
+<thead>
+<tr>
+<th>Month</th>
+<th>Total Generation</th>
+<th>Avg PR</th>
+<th>Avg Availability</th>
+<th>Avg CUF</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<canvas id="genChart" height="100"></canvas>
+
+<script>
+const DATA_SHEET_URL = "PASTE_YOUR_GENERATION_SHEET_JSON_URL";
+
+const role = localStorage.getItem("role");
+const allowedPlants = localStorage.getItem("plants");
+const username = localStorage.getItem("user");
+
+userInfo.innerText = `${username} (${role})`;
+
+function logout(){
+    localStorage.clear();
+    window.location.href="index.html";
+}
+
+fetch(DATA_SHEET_URL)
+.then(r=>r.json())
+.then(data=>{
+    const monthData={};
+
+    data.forEach(r=>{
+        const plant = r.plant;
+        if(role!=="admin" && allowedPlants!=="ALL" && !allowedPlants.split(",").includes(plant)) return;
+
+        const m = r.month;
+        if(!monthData[m]){
+            monthData[m]={gen:0, pr:0, avail:0, cuf:0, cnt:0};
+        }
+
+        monthData[m].gen += +r.actual_generation || 0;
+        monthData[m].pr  += +r.actual_pr || 0;
+        monthData[m].avail += +r.availability || 0;
+        monthData[m].cuf += +r.actual_cuf || 0;
+        monthData[m].cnt++;
+    });
+
+    const labels=[], genArr=[];
+    const tbody=document.querySelector("#summaryTable tbody");
+
+    Object.keys(monthData).forEach(m=>{
+        const d=monthData[m];
+        labels.push(m);
+        genArr.push(d.gen);
+
+        tbody.innerHTML+=`
+        <tr>
+            <td>${m}</td>
+            <td>${d.gen.toFixed(0)}</td>
+            <td>${(d.pr/d.cnt).toFixed(2)}%</td>
+            <td>${(d.avail/d.cnt).toFixed(2)}%</td>
+            <td>${(d.cuf/d.cnt).toFixed(2)}%</td>
+        </tr>`;
+    });
+
+    new Chart(genChart,{
+        type:"bar",
+        data:{
+            labels,
+            datasets:[{
+                label:"Actual Generation",
+                data:genArr
+            }]
+        }
+    });
+});
+</script>
 
 </body>
 </html>
