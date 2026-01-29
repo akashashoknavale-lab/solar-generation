@@ -435,10 +435,19 @@
                 updateView();
             });
 
-        function createFilters() {
-            [...new Set(allData.map(r => r[PLANT_COL]))].forEach(p => addCheckbox("plantFilter", p, selectedPlants));
-            [...new Set(allData.map(r => r[MONTH_COL]))].forEach(m => addCheckbox("monthFilter", m, selectedMonths));
-        }
+            function createFilters() {
+                const plantList = [...new Set(allData.map(r => r[PLANT_COL]))];
+            
+                plantList.forEach(p => {
+                    if (userRole === "admin" || allowedPlants === "ALL" || allowedPlants.includes(p)) {
+                        addCheckbox("plantFilter", p, selectedPlants);
+                    }
+                });
+            
+                [...new Set(allData.map(r => r[MONTH_COL]))]
+                    .forEach(m => addCheckbox("monthFilter", m, selectedMonths));
+            }
+
 
         function addCheckbox(id, val, set) {
             const l = document.createElement("label");
