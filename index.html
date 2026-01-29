@@ -447,6 +447,10 @@
                 [...new Set(allData.map(r => r[MONTH_COL]))]
                     .forEach(m => addCheckbox("monthFilter", m, selectedMonths));
             }
+            if (userRole !== "admin") {
+            document.querySelectorAll(".action-btn").forEach(b => b.style.display = "none");
+            }
+
 
 
         function addCheckbox(id, val, set) {
