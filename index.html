@@ -15,11 +15,9 @@ body {
     padding: 20px;
     background-color: #f4f4f4;
 }
-
 h1 {
     text-align: center;
 }
-
 .search-container {
     display: flex;
     justify-content: center;
@@ -27,12 +25,10 @@ h1 {
     margin-bottom: 20px;
     gap: 20px;
 }
-
 input {
     padding: 10px;
     width: 250px;
 }
-
 button {
     padding: 10px 20px;
     background: #4CAF50;
@@ -40,40 +36,33 @@ button {
     border: none;
     cursor: pointer;
 }
-
 button:hover {
     background: #45a049;
 }
-
 #lastMonthTotal {
     font-weight: bold;
     font-size: 16px;
 }
-
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
     background: white;
 }
-
 th, td {
     border: 1px solid #ddd;
     padding: 10px;
     text-align: center;
 }
-
 th {
     background: #4CAF50;
     color: white;
 }
-
 .result {
     margin-top: 20px;
     text-align: center;
     font-size: 18px;
 }
-
 canvas {
     margin-bottom: 20px;
     background: white;
@@ -109,20 +98,21 @@ canvas {
 </table>
 
 <script>
-const sheetURL = "https://docs.google.com/spreadsheets/d/1ol61rCN9yLUSVHekPz9S5W7yEfWQTTas8-yJtxKf1ys/gviz/tq?tqx=out:csv&sheet=Tab";
+const sheetURL =
+"https://docs.google.com/spreadsheets/d/1ol61rCN9yLUSVHekPz9S5W7yEfWQTTas8-yJtxKf1ys/gviz/tq?tqx=out:csv&sheet=Tab";
 
 let sheetData = [];
 let chart;
+
+// Convert DD-MM-YYYY → Date object
 function parseDDMMYYYY(dateStr) {
     const [d, m, y] = dateStr.split("-").map(Number);
     return new Date(y, m - 1, d);
 }
 
-// Fetch Google Sheet CSV data
+// Fetch Google Sheet CSV
 fetch(sheetURL)
 .then(res => res.text())
-.then(csv => {
-    const rows = csv.trim().split("\n");
 .then(csv => {
     const rows = csv.trim().split("\n");
 
@@ -138,26 +128,16 @@ fetch(sheetURL)
         const dateStr = cols[0].replace(/"/g, "").trim();
         const rowDate = parseDDMMYYYY(dateStr);
 
-        // ✅ LIMIT DATA TO LIVE DATE - 1
+        // 🚫 LIMIT DATA TO LIVE DATE - 1
         if (rowDate > yesterday) return;
-
-        const generation = Number(cols[1].replace(/"/g, "").trim());
-        const average = cols[2] ? Number(cols[2].replace(/"/g, "").trim()) : "";
-        const comments = cols[3] ? cols[3].replace(/"/g, "").trim() : "";
 
         sheetData.push({
             date: dateStr,
-            generation,
-            average,
-            comments
+            generation: Number(cols[1]?.replace(/"/g, "").trim() || 0),
+            average: cols[2]?.replace(/"/g, "").trim() || "",
+            comments: cols[3]?.replace(/"/g, "").trim() || ""
         });
     });
-
-    populateTable();
-    drawChart();
-    updateLastMonthTotal();
-})
-
 
     populateTable();
     drawChart();
@@ -178,7 +158,7 @@ function populateTable() {
     `).join("");
 }
 
-// Draw chart
+// Draw chart (last 30 valid days only)
 function drawChart(highlightDate = null) {
     const last30Data = sheetData.slice(-30);
 
@@ -186,7 +166,9 @@ function drawChart(highlightDate = null) {
     const values = last30Data.map(d => d.generation);
 
     const backgroundColors = last30Data.map(d =>
-        d.date === highlightDate ? "rgba(255, 99, 132, 0.8)" : "rgba(75, 192, 192, 0.6)"
+        d.date === highlightDate
+        ? "rgba(255,99,132,0.8)"
+        : "rgba(75,192,192,0.6)"
     );
 
     const ctx = document.getElementById("generationChart").getContext("2d");
@@ -196,13 +178,10 @@ function drawChart(highlightDate = null) {
     chart = new Chart(ctx, {
         type: "bar",
         data: {
-            labels: labels,
+            labels,
             datasets: [{
-                label: "Daily Generation (kWh)",
                 data: values,
-                backgroundColor: backgroundColors,
-                borderColor: "rgba(75, 192, 192, 1)",
-                borderWidth: 1
+                backgroundColor: backgroundColors
             }]
         },
         options: {
@@ -210,11 +189,10 @@ function drawChart(highlightDate = null) {
             plugins: {
                 legend: { display: false },
                 datalabels: {
-                    anchor: 'end',
-                    align: 'end',
-                    color: '#000',
-                    font: { weight: 'bold' },
-                    formatter: value => value
+                    anchor: "end",
+                    align: "end",
+                    color: "#000",
+                    font: { weight: "bold" }
                 }
             },
             scales: {
@@ -231,39 +209,32 @@ function drawChart(highlightDate = null) {
     });
 }
 
-// Calculate last month total based on last date in sheet
+// Last month total
 function updateLastMonthTotal() {
-    if(sheetData.length === 0) return;
+    if (!sheetData.length) return;
 
-    const lastRow = sheetData[sheetData.length - 1];
-    const [lastDay, lastMonth1, lastYear] = lastRow.date.split("-").map(Number);
-    const lastDate = new Date(lastYear, lastMonth1 - 1, lastDay);
+    const lastDate = parseDDMMYYYY(sheetData[sheetData.length - 1].date);
+    const lastMonth = lastDate.getMonth() - 1;
+    const year = lastMonth < 0 ? lastDate.getFullYear() - 1 : lastDate.getFullYear();
+    const month = (lastMonth + 12) % 12;
 
-    let lastMonth = lastDate.getMonth() - 1;
-    let lastMonthYear = lastDate.getFullYear();
-    if(lastMonth < 0){
-        lastMonth = 11;
-        lastMonthYear -= 1;
-    }
+    const total = sheetData.reduce((sum, d) => {
+        const dt = parseDDMMYYYY(d.date);
+        return (dt.getMonth() === month && dt.getFullYear() === year)
+            ? sum + d.generation
+            : sum;
+    }, 0);
 
-    let total = 0;
-    sheetData.forEach(d => {
-        const [day, month, year] = d.date.split("-").map(Number);
-        if((month - 1) === lastMonth && year === lastMonthYear){
-            total += d.generation;
-        }
-    });
-
-    document.getElementById("lastMonthTotal").textContent = `Last Month Total: ${total} kWh`;
+    document.getElementById("lastMonthTotal").textContent =
+        `Last Month Total: ${total} kWh`;
 }
 
-// Search and highlight
+// Search
 function searchData() {
     const inputDate = document.getElementById("searchDate").value.trim();
     const result = sheetData.find(r => r.date === inputDate);
 
-    document.getElementById("resultMessage").textContent =
-        result
+    document.getElementById("resultMessage").textContent = result
         ? `Generation = ${result.generation}, Avg/KWp = ${result.average}`
         : "No data found for selected date";
 
