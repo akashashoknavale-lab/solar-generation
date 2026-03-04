@@ -10,13 +10,22 @@
 <style>
 body { font-family: Arial; padding:20px; background:#f4f4f4; }
 h1 { text-align:center; }
+
 .search-container { text-align:center; margin-bottom:20px; }
+
 input { padding:8px; width:200px; }
 button { padding:8px 15px; background:#4CAF50; color:white; border:none; cursor:pointer; }
+
 table { width:100%; border-collapse:collapse; background:white; margin-top:20px; }
 th, td { border:1px solid #ddd; padding:8px; text-align:center; }
 th { background:#4CAF50; color:white; }
-canvas { background:white; padding:10px; margin-top:20px; }
+
+.chart-box{
+    background:white;
+    padding:15px;
+    margin-top:25px;
+}
+
 .result { margin-top:15px; font-weight:bold; text-align:center; }
 </style>
 </head>
@@ -30,7 +39,11 @@ canvas { background:white; padding:10px; margin-top:20px; }
     <button onclick="searchData()">Search</button>
 </div>
 
-<canvas id="generationChart" height="120"></canvas>
+<!-- ✅ Separate Charts -->
+<div class="chart-box"><canvas id="chartP1"></canvas></div>
+<div class="chart-box"><canvas id="chartP2"></canvas></div>
+<div class="chart-box"><canvas id="chartP3"></canvas></div>
+<div class="chart-box"><canvas id="chartK"></canvas></div>
 
 <div class="result" id="resultMessage"></div>
 
@@ -60,11 +73,19 @@ canvas { background:white; padding:10px; margin-top:20px; }
 const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTH0I_aVV9u6YxZXWlL1GmI_qE5rSHZMJd3gL_ChSgSFa8kXlrC89j4LjoIxEutuGoTdJC9sOyjPGIy/pub?output=csv";
 
 let sheetData = [];
-let chart;
+let charts = {};
 
 function parseDate(str){
     const [d,m,y] = str.split("-").map(Number);
     return new Date(y,m-1,d);
+}
+
+// ✅ yesterday date
+function getYesterday(){
+    const d = new Date();
+    d.setDate(d.getDate()-1);
+    d.setHours(0,0,0,0);
+    return d;
 }
 
 fetch(sheetURL)
@@ -77,6 +98,7 @@ fetch(sheetURL)
 
         sheetData.push({
             date: cols[0],
+            jsDate: parseDate(cols[0]),
             p1g: Number(cols[1])||0,
             p1a: cols[2]||"",
             p1c: cols[3]||"",
@@ -92,7 +114,7 @@ fetch(sheetURL)
     });
 
     populateTable();
-    drawChart();
+    drawAllCharts();
 });
 
 function populateTable(){
@@ -105,45 +127,35 @@ function populateTable(){
         <td>${d.p2g}</td><td>${d.p2a}</td><td>${d.p2c}</td>
         <td>${d.p3g}</td><td>${d.p3a}</td><td>${d.p3c}</td>
         <td>${d.kg}</td><td>${d.ka}</td>
-
         </tr>
     `).join("");
 }
 
-function drawChart(highlight=null){
+// ✅ get last 30 days till yesterday
+function getFilteredData(){
 
-    const last30 = sheetData.slice(-30);
+    const yesterday = getYesterday();
 
-    const labels = last30.map(d=>d.date);
+    const valid = sheetData
+        .filter(d=>d.jsDate <= yesterday)
+        .sort((a,b)=>a.jsDate - b.jsDate);
 
-    if(chart) chart.destroy();
+    return valid.slice(-30);
+}
 
-    chart = new Chart(document.getElementById("generationChart"),{
+function createChart(canvasId,label,data,color){
+
+    if(charts[canvasId]) charts[canvasId].destroy();
+
+    charts[canvasId] = new Chart(document.getElementById(canvasId),{
         type:"bar",
         data:{
-            labels:labels,
-            datasets:[
-                {
-                    label:"Phase 1",
-                    data:last30.map(d=>d.p1g),
-                    backgroundColor:"rgba(75,192,192,0.6)"
-                },
-                {
-                    label:"Phase 2",
-                    data:last30.map(d=>d.p2g),
-                    backgroundColor:"rgba(255,159,64,0.6)"
-                },
-                {
-                    label:"Phase 3",
-                    data:last30.map(d=>d.p3g),
-                    backgroundColor:"rgba(153,102,255,0.6)"
-                },
-                {
-                    label:"Kombhalane",
-                    data:last30.map(d=>d.kg),
-                    backgroundColor:"rgba(255,99,132,0.6)"
-                }
-            ]
+            labels:data.map(d=>d.date),
+            datasets:[{
+                label:label,
+                data:data.map(d=>d.value),
+                backgroundColor:color
+            }]
         },
         options:{
             responsive:true,
@@ -161,14 +173,47 @@ function drawChart(highlight=null){
     });
 }
 
+function drawAllCharts(){
+
+    const last30 = getFilteredData();
+
+    createChart(
+        "chartP1",
+        "Phase 1 Generation",
+        last30.map(d=>({date:d.date,value:d.p1g})),
+        "rgba(75,192,192,0.6)"
+    );
+
+    createChart(
+        "chartP2",
+        "Phase 2 Generation",
+        last30.map(d=>({date:d.date,value:d.p2g})),
+        "rgba(255,159,64,0.6)"
+    );
+
+    createChart(
+        "chartP3",
+        "Phase 3 Generation",
+        last30.map(d=>({date:d.date,value:d.p3g})),
+        "rgba(153,102,255,0.6)"
+    );
+
+    createChart(
+        "chartK",
+        "Kombhalane Generation",
+        last30.map(d=>({date:d.date,value:d.kg})),
+        "rgba(255,99,132,0.6)"
+    );
+}
+
 function searchData(){
     const date = document.getElementById("searchDate").value.trim();
     const r = sheetData.find(d=>d.date===date);
 
     document.getElementById("resultMessage").innerHTML =
-    r ? `
-    P1: ${r.p1g} | P2: ${r.p2g} | P3: ${r.p3g} | Komb: ${r.kg}
-    ` : "No data found";
+    r
+    ? `P1: ${r.p1g} | P2: ${r.p2g} | P3: ${r.p3g} | Komb: ${r.kg}`
+    : "No data found";
 }
 
 </script>
