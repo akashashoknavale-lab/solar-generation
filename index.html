@@ -20,13 +20,32 @@ table { width:100%; border-collapse:collapse; background:white; margin-top:20px;
 th, td { border:1px solid #ddd; padding:8px; text-align:center; }
 th { background:#4CAF50; color:white; }
 
-.chart-box{
-    background:white;
-    padding:15px;
-    margin-top:25px;
+.result { margin-top:15px; font-weight:bold; text-align:center; }
+
+/* ✅ COLLAGE GRID */
+.chart-grid{
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap:20px;
+    margin-top:20px;
 }
 
-.result { margin-top:15px; font-weight:bold; text-align:center; }
+.chart-box{
+    background:white;
+    padding:10px;
+    border-radius:8px;
+    height:260px;
+}
+
+/* mobile */
+@media(max-width:768px){
+    .chart-grid{
+        grid-template-columns: 1fr;
+    }
+    .chart-box{
+        height:240px;
+    }
+}
 </style>
 </head>
 
@@ -39,11 +58,26 @@ th { background:#4CAF50; color:white; }
     <button onclick="searchData()">Search</button>
 </div>
 
-<!-- ✅ Separate Charts -->
-<div class="chart-box"><canvas id="chartP1"></canvas></div>
-<div class="chart-box"><canvas id="chartP2"></canvas></div>
-<div class="chart-box"><canvas id="chartP3"></canvas></div>
-<div class="chart-box"><canvas id="chartK"></canvas></div>
+<!-- ✅ COLLAGE OF 4 CHARTS -->
+<div class="chart-grid">
+
+    <div class="chart-box">
+        <canvas id="chartP1"></canvas>
+    </div>
+
+    <div class="chart-box">
+        <canvas id="chartP2"></canvas>
+    </div>
+
+    <div class="chart-box">
+        <canvas id="chartP3"></canvas>
+    </div>
+
+    <div class="chart-box">
+        <canvas id="chartK"></canvas>
+    </div>
+
+</div>
 
 <div class="result" id="resultMessage"></div>
 
@@ -80,7 +114,7 @@ function parseDate(str){
     return new Date(y,m-1,d);
 }
 
-// ✅ yesterday date
+// ✅ yesterday
 function getYesterday(){
     const d = new Date();
     d.setDate(d.getDate()-1);
@@ -131,7 +165,7 @@ function populateTable(){
     `).join("");
 }
 
-// ✅ get last 30 days till yesterday
+// ✅ last 30 days till yesterday
 function getFilteredData(){
 
     const yesterday = getYesterday();
@@ -159,10 +193,13 @@ function createChart(canvasId,label,data,color){
         },
         options:{
             responsive:true,
+            maintainAspectRatio:false,
             plugins:{
+                legend:{ display:true },
                 datalabels:{
                     anchor:'end',
-                    align:'end'
+                    align:'end',
+                    font:{ size:9 }
                 }
             },
             scales:{
