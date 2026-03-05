@@ -131,9 +131,9 @@ Select Month :
 <tr>
 <th rowspan="2">Date</th>
 
-<th colspan="3">Pyramid Phase 1</th>
-<th colspan="3">Pyramid Phase 2</th>
-<th colspan="3">Pyramid Phase 3</th>
+<th colspan="3">Pyramid Phase 1(6MW)</th>
+<th colspan="3">Pyramid Phase 2(5MW)</th>
+<th colspan="3">Pyramid Phase 3(1MW)</th>
 <th colspan="2">Kombhalane</th>
 </tr>
 
@@ -345,11 +345,11 @@ plugins:[ChartDataLabels]
 
 function drawCharts(data){
 
-createChart("chartP1","Phase 1",data.map(d=>({date:d.date,gen:d.p1g})));
+createChart("chartP1","Phase 1 (6MW)",data.map(d=>({date:d.date,gen:d.p1g})));
 
-createChart("chartP2","Phase 2",data.map(d=>({date:d.date,gen:d.p2g})));
+createChart("chartP2","Phase 2 (5MW)",data.map(d=>({date:d.date,gen:d.p2g})));
 
-createChart("chartP3","Phase 3",data.map(d=>({date:d.date,gen:d.p3g})));
+createChart("chartP3","Phase 3 (1MW)",data.map(d=>({date:d.date,gen:d.p3g})));
 
 createChart("chartK","Kombhalane",data.map(d=>({date:d.date,gen:d.kg})));
 
