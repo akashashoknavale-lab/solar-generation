@@ -147,11 +147,11 @@ let totalPower = 0;
 for(let i=1;i<rows.length;i++){
 
     const cols = rows[i].split(",");
-    if(cols.length < 3) continue;
+    if(cols.length < 4) continue;
 
     const datetime = cols[0];
     const invId = cols[1];
-    const power = parseFloat(cols[2]) || 0;
+    const power = parseFloat(cols[3]) || 0;
 
     let dateObj = new Date(datetime);
     let hour = dateObj.getHours();
