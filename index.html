@@ -1,378 +1,253 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Pyramid All Sites Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Solar Monitoring Dashboard</title>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<style>
+  <style>
 
-body{
-font-family:Arial;
-background:#f4f4f4;
-padding:20px;
-}
+    body{
+      margin:0;
+      font-family:Arial;
+      background:#f2f5f7;
+    }
 
-h1{
-text-align:center;
-}
+    .header{
+      background:#0f172a;
+      color:white;
+      padding:15px;
+      font-size:28px;
+      font-weight:bold;
+      text-align:center;
+    }
 
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:20px;
-}
+    .container{
+      padding:20px;
+    }
 
-select{
-padding:6px;
-}
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:20px;
+      margin-bottom:30px;
+    }
 
-.summary{
-font-weight:bold;
-}
+    .card{
+      background:white;
+      border-radius:15px;
+      padding:20px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    }
 
-table{
-width:100%;
-border-collapse:collapse;
-background:white;
-margin-top:20px;
-table-layout:fixed;
-}
+    .card-title{
+      font-size:18px;
+      color:#555;
+      margin-bottom:10px;
+    }
 
-th,td{
-border:1px solid #ddd;
-padding:6px;
-text-align:center;
-word-wrap:break-word;
-}
+    .card-value{
+      font-size:32px;
+      font-weight:bold;
+      color:#0f172a;
+    }
 
-th{
-background:#4CAF50;
-color:white;
-}
+    .chart-box{
+      background:white;
+      padding:20px;
+      border-radius:15px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.1);
+      margin-bottom:30px;
+    }
 
-td.comment{
-text-align:left;
-white-space:normal;
-word-break:break-word;
-}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      background:white;
+      border-radius:15px;
+      overflow:hidden;
+      box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    }
 
-.chartGrid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:25px;
-margin-top:20px;
-}
+    th{
+      background:#0f172a;
+      color:white;
+      padding:12px;
+    }
 
-.chartBox{
-background:white;
-padding:15px;
-border-radius:10px;
-box-shadow:0 2px 6px rgba(0,0,0,0.15);
-}
+    td{
+      padding:10px;
+      border-bottom:1px solid #ddd;
+      text-align:center;
+    }
 
-canvas{
-height:260px !important;
-}
+    tr:hover{
+      background:#f5f5f5;
+    }
 
-@media(max-width:900px){
-.chartGrid{
-grid-template-columns:1fr;
-}
-}
-
-</style>
+  </style>
 </head>
-
 <body>
 
-<h1>Pyramid Phase 1,2,3 & Kombhalane Dashboard</h1>
-
-<div class="topbar">
-
-<div>
-Select Month :
-<select id="monthSelect" onchange="filterMonth()">
-<option value="0">Jan</option>
-<option value="1">Feb</option>
-<option value="2">Mar</option>
-<option value="3">Apr</option>
-<option value="4">May</option>
-<option value="5">Jun</option>
-<option value="6">Jul</option>
-<option value="7">Aug</option>
-<option value="8">Sep</option>
-<option value="9">Oct</option>
-<option value="10">Nov</option>
-<option value="11">Dec</option>
-</select>
+<div class="header">
+  Solar Remote Monitoring Dashboard
 </div>
 
-<div class="summary" id="monthSummary"></div>
+<div class="container">
+
+  <div class="cards">
+
+    <div class="card">
+      <div class="card-title">Current Power</div>
+      <div class="card-value" id="power">0 kW</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Daily Energy</div>
+      <div class="card-value" id="energy">0 kWh</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Voltage</div>
+      <div class="card-value" id="voltage">0 V</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Temperature</div>
+      <div class="card-value" id="temp">0 °C</div>
+    </div>
+
+  </div>
+
+  <div class="chart-box">
+    <canvas id="powerChart"></canvas>
+  </div>
+
+  <div class="chart-box">
+    <canvas id="energyChart"></canvas>
+  </div>
+
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Date Time</th>
+        <th>Inv ID</th>
+        <th>Power</th>
+        <th>Voltage</th>
+        <th>Temperature</th>
+      </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+  </table>
 
 </div>
-
-<div class="chartGrid">
-
-<div class="chartBox"><canvas id="chartP1"></canvas></div>
-<div class="chartBox"><canvas id="chartP2"></canvas></div>
-<div class="chartBox"><canvas id="chartP3"></canvas></div>
-<div class="chartBox"><canvas id="chartK"></canvas></div>
-
-</div>
-
-<table>
-
-<thead>
-
-<tr>
-<th rowspan="2">Date</th>
-
-<th colspan="3">Pyramid Phase 1(6MW)</th>
-<th colspan="3">Pyramid Phase 2(5MW)</th>
-<th colspan="3">Pyramid Phase 3(1MW)</th>
-<th colspan="2">Kombhalane</th>
-</tr>
-
-<tr>
-
-<th>Gen</th>
-<th>Avg</th>
-<th>Comment</th>
-
-<th>Gen</th>
-<th>Avg</th>
-<th>Comment</th>
-
-<th>Gen</th>
-<th>Avg</th>
-<th>Comment</th>
-
-<th>Gen</th>
-<th>Avg</th>
-
-</tr>
-
-</thead>
-
-<tbody id="dataBody"></tbody>
-
-</table>
 
 <script>
 
-const sheetURL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTH0I_aVV9u6YxZXWlL1GmI_qE5rSHZMJd3gL_ChSgSFa8kXlrC89j4LjoIxEutuGoTdJC9sOyjPGIy/pub?output=csv";
+const CSV_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnS3pL3JyabVpduc3gZ1JwPUG5LZvw2g4khUwndVmpyBYH91CnS23Y1nVjFWtscBFc4yTfPLDNyzkLv_lkxfx9RkRIJoOETt4WOSwuQG_nSoTVcHymk3CVJm7yUPWTp76Zi2TN-ntmjrTfcmGkUwNTCFs4Md2xxWvua6yiIzsl2qJAlbzM6NQkim_SaMI6X4GDRlSp31g9zB4s1i-HTIyGX6173pj0sMVsDt62Uda5kQZ-hBw1f6_BsWseHiMWkFb2dP228UirJZ9IYTVawvunewO7Lgtw&lib=MCz00kSXntMNG2j8lNix72WIZvkK2cN4n";
 
-let rawData=[];
-let charts={};
+async function loadData(){
 
-function parseDate(str){
+  const response = await fetch(CSV_URL);
+  const csvText = await response.text();
 
-let [d,m,y]=str.split("-").map(Number);
-return new Date(y,m-1,d);
+  const rows = csvText.trim().split("\n");
 
-}
+  let labels = [];
+  let powerData = [];
+  let energyData = [];
 
-fetch(sheetURL)
+  const tbody = document.querySelector("#dataTable tbody");
 
-.then(res=>res.text())
+  tbody.innerHTML = "";
 
-.then(csv=>{
+  for(let i=1;i<rows.length;i++){
 
-const rows=csv.trim().split("\n");
+    const cols = rows[i].split(",");
 
-rows.slice(1).forEach(r=>{
+    if(cols.length < 10) continue;
 
-const c=r.split(",");
+    const datetime = cols[0];
+    const invId = cols[1];
 
-rawData.push({
+    const power = parseFloat(cols[8]) || 0;
+    const voltage = parseFloat(cols[5]) || 0;
+    const temp = parseFloat(cols[4]) || 0;
+    const energy = parseFloat(cols[2]) || 0;
 
-date:c[0],
-dObj:parseDate(c[0]),
+    labels.push(datetime);
+    powerData.push(power);
+    energyData.push(energy);
 
-p1g:Number(c[1])||0,
-p1a:c[2]||"",
-p1c:c[3]||"",
+    if(i == rows.length - 1){
 
-p2g:Number(c[4])||0,
-p2a:c[5]||"",
-p2c:c[6]||"",
+      document.getElementById("power").innerText = power + " kW";
+      document.getElementById("energy").innerText = energy + " kWh";
+      document.getElementById("voltage").innerText = voltage + " V";
+      document.getElementById("temp").innerText = temp + " °C";
 
-p3g:Number(c[7])||0,
-p3a:c[8]||"",
-p3c:c[9]||"",
+    }
 
-kg:Number(c[10])||0,
-ka:c[11]||""
+    const tr = document.createElement("tr");
 
-});
+    tr.innerHTML = `
+      <td>${datetime}</td>
+      <td>${invId}</td>
+      <td>${power}</td>
+      <td>${voltage}</td>
+      <td>${temp}</td>
+    `;
 
-});
+    tbody.appendChild(tr);
 
-setDefaultMonth();
-filterMonth();
+  }
 
-});
-
-function setDefaultMonth(){
-
-const m=new Date().getMonth();
-document.getElementById("monthSelect").value=m;
-
-}
-
-function filterMonth(){
-
-const m=Number(document.getElementById("monthSelect").value);
-
-const filtered=rawData.filter(d=>d.dObj.getMonth()===m);
-
-populateTable(filtered);
-
-drawCharts(filtered);
-
-monthSummary(filtered);
+  createPowerChart(labels,powerData);
+  createEnergyChart(labels,energyData);
 
 }
 
-function populateTable(data){
+function createPowerChart(labels,data){
 
-document.getElementById("dataBody").innerHTML=
-
-data.map(d=>`
-
-<tr>
-
-<td>${d.date}</td>
-
-<td>${d.p1g}</td>
-<td>${d.p1a}</td>
-<td class="comment">${d.p1c}</td>
-
-<td>${d.p2g}</td>
-<td>${d.p2a}</td>
-<td class="comment">${d.p2c}</td>
-
-<td>${d.p3g}</td>
-<td>${d.p3a}</td>
-<td class="comment">${d.p3c}</td>
-
-<td>${d.kg}</td>
-<td>${d.ka}</td>
-
-</tr>
-
-`).join("");
+  new Chart(document.getElementById("powerChart"),{
+    type:'line',
+    data:{
+      labels:labels,
+      datasets:[{
+        label:'Power kW',
+        data:data,
+        borderWidth:2,
+        tension:0.3
+      }]
+    }
+  });
 
 }
 
-function createChart(id,label,data){
+function createEnergyChart(labels,data){
 
-if(charts[id]) charts[id].destroy();
-
-charts[id]=new Chart(document.getElementById(id),{
-
-type:"bar",
-
-data:{
-labels:data.map(d=>d.date),
-
-datasets:[{
-
-label:label,
-data:data.map(d=>d.gen),
-backgroundColor:"rgba(54,162,235,0.7)",
-borderRadius:4,
-barPercentage:0.7,
-categoryPercentage:0.8
-
-}]
-
-},
-
-options:{
-
-responsive:true,
-maintainAspectRatio:false,
-
-plugins:{
-
-title:{
-display:true,
-text:label+" Generation",
-font:{size:14}
-},
-
-legend:{
-display:false
-},
-
-tooltip:{
-enabled:true
-},
-
-datalabels:{
-anchor:'end',
-align:'top',
-font:{size:10}
-}
-
-},
-
-scales:{
-
-x:{
-grid:{display:false}
-},
-
-y:{
-beginAtZero:true,
-grid:{color:"#eee"}
-}
+  new Chart(document.getElementById("energyChart"),{
+    type:'bar',
+    data:{
+      labels:labels,
+      datasets:[{
+        label:'Energy kWh',
+        data:data,
+        borderWidth:1
+      }]
+    }
+  });
 
 }
 
-},
+loadData();
 
-plugins:[ChartDataLabels]
-
-});
-
-}
-
-function drawCharts(data){
-
-createChart("chartP1","Phase 1 (6MW)",data.map(d=>({date:d.date,gen:d.p1g})));
-
-createChart("chartP2","Phase 2 (5MW)",data.map(d=>({date:d.date,gen:d.p2g})));
-
-createChart("chartP3","Phase 3 (1MW)",data.map(d=>({date:d.date,gen:d.p3g})));
-
-createChart("chartK","Kombhalane",data.map(d=>({date:d.date,gen:d.kg})));
-
-}
-
-function monthSummary(data){
-
-let p1=0,p2=0,p3=0,k=0;
-
-data.forEach(d=>{
-
-p1+=d.p1g;
-p2+=d.p2g;
-p3+=d.p3g;
-k+=d.kg;
-
-});
-
-document.getElementById("monthSummary").innerHTML=
-
-`Month Generation → P1:${p1} | P2:${p2} | P3:${p3} | Komb:${k}`;
-
-}
+// Auto refresh every 30 sec
+setInterval(loadData,30000);
 
 </script>
 
