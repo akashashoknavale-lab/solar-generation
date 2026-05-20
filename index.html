@@ -89,7 +89,7 @@ canvas{ max-height:420px; }
 
 <div class="top-cards">
     <div class="card">
-        <div class="card-title">Total Plant Power</div>
+        <div class="card-title">Todays Generation</div>
         <div class="card-value" id="totalPower">0 kW</div>
     </div>
 
@@ -199,7 +199,7 @@ Object.keys(inverterLatest).forEach(inv=>{
     invContainer.innerHTML += `
     <div class="inv-card">
         <div class="inv-name">Inverter ${inv}</div>
-        <div class="inv-power">${power.toFixed(2)} kW</div>
+        <div class="inv-power">${power.toFixed(3)} kW</div>
     </div>`;
 });
 
