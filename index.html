@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -74,7 +75,10 @@ body{
     margin-bottom:30px;
     height:450px;
 }
+
+canvas{ max-height:420px; }
 </style>
+
 </head>
 
 <body>
@@ -112,6 +116,7 @@ body{
 
 <script>
 
+// 🔥 GOOGLE SCRIPT CSV URL
 const CSV_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnS3pL3JyabVpduc3gZ1JwPUG5LZvw2g4khUwndVmpyBYH91CnS23Y1nVjFWtscBFc4yTfPLDNyzkLv_lkxfx9RkRIJoOETt4WOSwuQG_nSoTVcHymk3CVJm7yUPWTp76Zi2TN-ntmjrTfcmGkUwNTCFs4Md2xxWvua6yiIzsl2qJAlbzM6NQkim_SaMI6X4GDRlSp31g9zB4s1i-HTIyGX6173pj0sMVsDt62Uda5kQZ-hBw1f6_BsWseHiMWkFb2dP228UirJZ9IYTVawvunewO7Lgtw&lib=MCz00kSXntMNG2j8lNix72WIZvkK2cN4n";
 
 let totalChart;
@@ -125,17 +130,20 @@ const response = await fetch(CSV_URL);
 const csv = await response.text();
 const rows = csv.trim().split("\n");
 
-let inverterLatest = {};
-let totalPower = 0;
-
-// ✅ FIXED TIME BUCKETS (6AM–7PM)
+// 🔥 hourly bucket (FULL DAY FIX)
 let totalPowerByTime = {};
 for(let h=6; h<=19; h++){
     let label = (h<10?"0"+h:h)+":00";
     totalPowerByTime[label] = 0;
 }
 
+let inverterLatest = {};
+let lastSeen = {};
+let totalPower = 0;
+
+// ----------------------
 // READ CSV
+// ----------------------
 for(let i=1;i<rows.length;i++){
 
     const cols = rows[i].split(",");
@@ -145,26 +153,36 @@ for(let i=1;i<rows.length;i++){
     const invId = cols[1];
     const power = parseFloat(cols[2]) || 0;
 
-    inverterLatest[invId] = power;
-
     let dateObj = new Date(datetime);
     let hour = dateObj.getHours();
 
+    // store latest inverter value
+    lastSeen[invId] = power;
+
+    // hourly aggregation
     if(hour >= 6 && hour <= 19){
         let label = (hour<10?"0"+hour:hour)+":00";
         totalPowerByTime[label] += power;
     }
 }
 
+// assign latest inverter data
+inverterLatest = lastSeen;
+
+// ----------------------
 // TOTAL POWER
+// ----------------------
 Object.values(inverterLatest).forEach(v=>{
     totalPower += v;
 });
 
+// update cards
 document.getElementById("totalPower").innerText = totalPower.toFixed(2)+" kW";
 document.getElementById("totalInv").innerText = Object.keys(inverterLatest).length;
 
-// INV CARDS
+// ----------------------
+// INVERTER CARDS
+// ----------------------
 const invContainer = document.getElementById("invCards");
 invContainer.innerHTML="";
 
@@ -185,7 +203,9 @@ Object.keys(inverterLatest).forEach(inv=>{
     </div>`;
 });
 
-// ORDERED CHART DATA (IMPORTANT)
+// ----------------------
+// ORDERED CHART DATA (IMPORTANT FIX)
+// ----------------------
 let labels=[];
 let data=[];
 
@@ -195,6 +215,9 @@ for(let h=6; h<=19; h++){
     data.push(totalPowerByTime[label]);
 }
 
+// ----------------------
+// DRAW CHARTS
+// ----------------------
 createTotalChart(labels,data);
 createInverterChart(invLabels,invData);
 
@@ -205,6 +228,9 @@ console.log(err);
 
 }
 
+// ----------------------
+// LINE CHART
+// ----------------------
 function createTotalChart(labels,data){
 
 if(totalChart) totalChart.destroy();
@@ -216,7 +242,7 @@ type:'line',
 data:{
 labels:labels,
 datasets:[{
-label:'Total Plant Power kW',
+label:'Total Plant Power (kW)',
 data:data,
 borderWidth:2,
 tension:0.3,
@@ -230,6 +256,9 @@ maintainAspectRatio:false
 });
 }
 
+// ----------------------
+// BAR CHART
+// ----------------------
 function createInverterChart(labels,data){
 
 if(inverterChart) inverterChart.destroy();
@@ -241,7 +270,7 @@ type:'bar',
 data:{
 labels:labels,
 datasets:[{
-label:'Inverter Power kW',
+label:'Inverter Power (kW)',
 data:data
 }]
 },
@@ -252,6 +281,7 @@ maintainAspectRatio:false
 });
 }
 
+// AUTO LOAD
 loadData();
 setInterval(loadData,30000);
 
