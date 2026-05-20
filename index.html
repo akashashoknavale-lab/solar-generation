@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -11,97 +12,98 @@
 <style>
 
 body{
-  margin:0;
-  font-family:Arial;
-  background:#f1f5f9;
+    margin:0;
+    font-family:Arial;
+    background:#f1f5f9;
 }
 
 .header{
-  background:#0f172a;
-  color:white;
-  padding:18px;
-  text-align:center;
-  font-size:30px;
-  font-weight:bold;
+    background:#0f172a;
+    color:white;
+    padding:18px;
+    text-align:center;
+    font-size:30px;
+    font-weight:bold;
 }
 
 .container{
-  padding:20px;
+    padding:20px;
 }
 
 .top-cards{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:20px;
-  margin-bottom:30px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:20px;
+    margin-bottom:30px;
 }
 
 .card{
-  background:white;
-  padding:25px;
-  border-radius:15px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
 }
 
 .card-title{
-  font-size:18px;
-  color:#666;
-  margin-bottom:10px;
+    font-size:18px;
+    color:#666;
+    margin-bottom:10px;
 }
 
 .card-value{
-  font-size:38px;
-  font-weight:bold;
-  color:#0f172a;
+    font-size:38px;
+    font-weight:bold;
+    color:#0f172a;
 }
 
 .section-title{
-  font-size:24px;
-  margin:25px 0 15px;
-  font-weight:bold;
-  color:#0f172a;
+    font-size:24px;
+    margin:25px 0 15px;
+    font-weight:bold;
+    color:#0f172a;
 }
 
 .inv-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:20px;
-  margin-bottom:40px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+    margin-bottom:40px;
 }
 
 .inv-card{
-  background:white;
-  padding:20px;
-  border-radius:15px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.1);
-  text-align:center;
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    text-align:center;
 }
 
 .inv-name{
-  font-size:20px;
-  font-weight:bold;
-  margin-bottom:10px;
+    font-size:20px;
+    font-weight:bold;
+    margin-bottom:10px;
 }
 
 .inv-power{
-  font-size:35px;
-  color:green;
-  font-weight:bold;
+    font-size:35px;
+    color:green;
+    font-weight:bold;
 }
 
 .chart-box{
-  background:white;
-  padding:20px;
-  border-radius:15px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.1);
-  margin-bottom:30px;
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+    margin-bottom:30px;
 }
 
 canvas{
-  max-height:450px;
+    max-height:450px;
 }
 
 </style>
+
 </head>
 
 <body>
@@ -130,12 +132,10 @@ Solar Remote Monitoring Dashboard
 Live Inverter Power
 </div>
 
-<div class="inv-grid" id="invCards">
-
-</div>
+<div class="inv-grid" id="invCards"></div>
 
 <div class="section-title">
-Total Plant Power Trend (6 AM to Now)
+Total Plant Power Trend
 </div>
 
 <div class="chart-box">
@@ -143,7 +143,7 @@ Total Plant Power Trend (6 AM to Now)
 </div>
 
 <div class="section-title">
-Individual Inverter Power Graph
+Inverter Wise Power
 </div>
 
 <div class="chart-box">
@@ -154,174 +154,231 @@ Individual Inverter Power Graph
 
 <script>
 
+//////////////////////////////////////////////////////
+// PASTE YOUR APPS SCRIPT URL BELOW
+//////////////////////////////////////////////////////
+
 const CSV_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnS3pL3JyabVpduc3gZ1JwPUG5LZvw2g4khUwndVmpyBYH91CnS23Y1nVjFWtscBFc4yTfPLDNyzkLv_lkxfx9RkRIJoOETt4WOSwuQG_nSoTVcHymk3CVJm7yUPWTp76Zi2TN-ntmjrTfcmGkUwNTCFs4Md2xxWvua6yiIzsl2qJAlbzM6NQkim_SaMI6X4GDRlSp31g9zB4s1i-HTIyGX6173pj0sMVsDt62Uda5kQZ-hBw1f6_BsWseHiMWkFb2dP228UirJZ9IYTVawvunewO7Lgtw&lib=MCz00kSXntMNG2j8lNix72WIZvkK2cN4n";
+
+//////////////////////////////////////////////////////
 
 let totalChart;
 let inverterChart;
 
 async function loadData(){
 
-  const response = await fetch(CSV_URL);
+    try{
 
-  const csv = await response.text();
+        const response = await fetch(CSV_URL);
 
-  const rows = csv.trim().split("\n");
+        const csv = await response.text();
 
-  let inverterLatest = {};
+        const rows = csv.trim().split("\n");
 
-  let totalPower = 0;
+        let inverterLatest = {};
 
-  let totalTrendLabels = [];
-  let totalTrendData = [];
+        let totalPower = 0;
 
-  let inverterGraphLabels = [];
-  let inverterGraphData = [];
+        let totalTrendLabels = [];
 
-  for(let i=1;i<rows.length;i++){
+        let totalTrendData = [];
 
-    const cols = rows[i].split(",");
+        //////////////////////////////////////////////////////
+        // READ CSV
+        //////////////////////////////////////////////////////
 
-    if(cols.length < 10) continue;
+        for(let i=1;i<rows.length;i++){
 
-    const datetime = cols[0];
+            const cols = rows[i].split(",");
 
-    const invId = cols[1];
+            // Skip invalid rows
+            if(cols.length < 3) continue;
 
-    const power = parseFloat(cols[8]) || 0;
+            //////////////////////////////////////////////////////
+            // COLUMN SETTINGS
+            //////////////////////////////////////////////////////
 
-    // Latest inverter power
-    inverterLatest[invId] = power;
+            const datetime = cols[0];
 
-    // Total plant trend
-    totalTrendLabels.push(datetime);
+            const invId = cols[1];
 
-    totalTrendData.push(power);
+            // IMPORTANT:
+            // CHANGE THIS COLUMN NUMBER IF POWER WRONG
 
-  }
+            const power = parseFloat(cols[2]) || 0;
 
-  // Total inverter power
-  Object.keys(inverterLatest).forEach(inv => {
+            //////////////////////////////////////////////////////
 
-    totalPower += inverterLatest[inv];
+            inverterLatest[invId] = power;
 
-  });
+            totalTrendLabels.push(datetime);
 
-  // Update cards
-  document.getElementById("totalPower").innerText =
-    totalPower.toFixed(2) + " kW";
+            totalTrendData.push(power);
 
-  document.getElementById("totalInv").innerText =
-    Object.keys(inverterLatest).length;
+        }
 
-  // Inverter Cards
-  const invContainer = document.getElementById("invCards");
+        //////////////////////////////////////////////////////
+        // TOTAL POWER
+        //////////////////////////////////////////////////////
 
-  invContainer.innerHTML = "";
+        Object.keys(inverterLatest).forEach(inv => {
 
-  Object.keys(inverterLatest).forEach(inv => {
+            totalPower += inverterLatest[inv];
 
-    const power = inverterLatest[inv];
+        });
 
-    inverterGraphLabels.push("INV " + inv);
+        //////////////////////////////////////////////////////
+        // UPDATE CARDS
+        //////////////////////////////////////////////////////
 
-    inverterGraphData.push(power);
+        document.getElementById("totalPower").innerText =
+            totalPower.toFixed(2) + " kW";
 
-    const card = document.createElement("div");
+        document.getElementById("totalInv").innerText =
+            Object.keys(inverterLatest).length;
 
-    card.className = "inv-card";
+        //////////////////////////////////////////////////////
+        // INVERTER CARDS
+        //////////////////////////////////////////////////////
 
-    card.innerHTML = `
-      <div class="inv-name">
-        Inverter ${inv}
-      </div>
+        const invContainer = document.getElementById("invCards");
 
-      <div class="inv-power">
-        ${power.toFixed(2)} kW
-      </div>
-    `;
+        invContainer.innerHTML = "";
 
-    invContainer.appendChild(card);
+        let inverterLabels = [];
 
-  });
+        let inverterPowerData = [];
 
-  createTotalChart(totalTrendLabels,totalTrendData);
+        Object.keys(inverterLatest).forEach(inv => {
 
-  createInverterChart(inverterGraphLabels,inverterGraphData);
+            const power = inverterLatest[inv];
+
+            inverterLabels.push("INV " + inv);
+
+            inverterPowerData.push(power);
+
+            const card = document.createElement("div");
+
+            card.className = "inv-card";
+
+            card.innerHTML = `
+                <div class="inv-name">
+                    Inverter ${inv}
+                </div>
+
+                <div class="inv-power">
+                    ${power.toFixed(2)} kW
+                </div>
+            `;
+
+            invContainer.appendChild(card);
+
+        });
+
+        //////////////////////////////////////////////////////
+        // TOTAL POWER LINE CHART
+        //////////////////////////////////////////////////////
+
+        createTotalChart(totalTrendLabels,totalTrendData);
+
+        //////////////////////////////////////////////////////
+        // INVERTER BAR CHART
+        //////////////////////////////////////////////////////
+
+        createInverterChart(inverterLabels,inverterPowerData);
+
+    }
+
+    catch(error){
+
+        console.log(error);
+
+    }
 
 }
+
+//////////////////////////////////////////////////////
+// TOTAL POWER LINE CHART
+//////////////////////////////////////////////////////
 
 function createTotalChart(labels,data){
 
-  if(totalChart){
-    totalChart.destroy();
-  }
-
-  totalChart = new Chart(
-    document.getElementById("totalPowerChart"),
-    {
-      type:'line',
-
-      data:{
-        labels:labels,
-
-        datasets:[{
-          label:'Total Plant Power kW',
-          data:data,
-          fill:false,
-          tension:0.3,
-          borderWidth:2
-        }]
-      },
-
-      options:{
-        responsive:true,
-        scales:{
-          x:{
-            ticks:{
-              maxTicksLimit:10
-            }
-          }
-        }
-      }
-
+    if(totalChart){
+        totalChart.destroy();
     }
-  );
+
+    totalChart = new Chart(
+        document.getElementById("totalPowerChart"),
+        {
+            type:'line',
+
+            data:{
+                labels:labels,
+
+                datasets:[{
+                    label:'Plant Power kW',
+                    data:data,
+                    fill:false,
+                    tension:0.3,
+                    borderWidth:2
+                }]
+            },
+
+            options:{
+                responsive:true,
+                maintainAspectRatio:false
+            }
+
+        }
+    );
 
 }
+
+//////////////////////////////////////////////////////
+// INVERTER BAR CHART
+//////////////////////////////////////////////////////
 
 function createInverterChart(labels,data){
 
-  if(inverterChart){
-    inverterChart.destroy();
-  }
-
-  inverterChart = new Chart(
-    document.getElementById("inverterChart"),
-    {
-      type:'bar',
-
-      data:{
-        labels:labels,
-
-        datasets:[{
-          label:'Inverter Power kW',
-          data:data,
-          borderWidth:1
-        }]
-      },
-
-      options:{
-        responsive:true
-      }
-
+    if(inverterChart){
+        inverterChart.destroy();
     }
-  );
+
+    inverterChart = new Chart(
+        document.getElementById("inverterChart"),
+        {
+            type:'bar',
+
+            data:{
+                labels:labels,
+
+                datasets:[{
+                    label:'Inverter Power kW',
+                    data:data,
+                    borderWidth:1
+                }]
+            },
+
+            options:{
+                responsive:true,
+                maintainAspectRatio:false
+            }
+
+        }
+    );
 
 }
 
+//////////////////////////////////////////////////////
+// LOAD DATA
+//////////////////////////////////////////////////////
+
 loadData();
 
-// Auto refresh every 30 sec
+//////////////////////////////////////////////////////
+// AUTO REFRESH EVERY 30 SEC
+//////////////////////////////////////////////////////
+
 setInterval(loadData,30000);
 
 </script>
