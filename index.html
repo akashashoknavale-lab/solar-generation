@@ -1,169 +1,181 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Solar Monitoring Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>Solar SCADA Dashboard</title>
 
-  <style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    body{
-      margin:0;
-      font-family:Arial;
-      background:#f2f5f7;
-    }
+<style>
 
-    .header{
-      background:#0f172a;
-      color:white;
-      padding:15px;
-      font-size:28px;
-      font-weight:bold;
-      text-align:center;
-    }
+body{
+  margin:0;
+  font-family:Arial;
+  background:#f1f5f9;
+}
 
-    .container{
-      padding:20px;
-    }
+.header{
+  background:#0f172a;
+  color:white;
+  padding:18px;
+  text-align:center;
+  font-size:30px;
+  font-weight:bold;
+}
 
-    .cards{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-      gap:20px;
-      margin-bottom:30px;
-    }
+.container{
+  padding:20px;
+}
 
-    .card{
-      background:white;
-      border-radius:15px;
-      padding:20px;
-      box-shadow:0 4px 10px rgba(0,0,0,0.1);
-    }
+.top-cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:20px;
+  margin-bottom:30px;
+}
 
-    .card-title{
-      font-size:18px;
-      color:#555;
-      margin-bottom:10px;
-    }
+.card{
+  background:white;
+  padding:25px;
+  border-radius:15px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
 
-    .card-value{
-      font-size:32px;
-      font-weight:bold;
-      color:#0f172a;
-    }
+.card-title{
+  font-size:18px;
+  color:#666;
+  margin-bottom:10px;
+}
 
-    .chart-box{
-      background:white;
-      padding:20px;
-      border-radius:15px;
-      box-shadow:0 4px 10px rgba(0,0,0,0.1);
-      margin-bottom:30px;
-    }
+.card-value{
+  font-size:38px;
+  font-weight:bold;
+  color:#0f172a;
+}
 
-    table{
-      width:100%;
-      border-collapse:collapse;
-      background:white;
-      border-radius:15px;
-      overflow:hidden;
-      box-shadow:0 4px 10px rgba(0,0,0,0.1);
-    }
+.section-title{
+  font-size:24px;
+  margin:25px 0 15px;
+  font-weight:bold;
+  color:#0f172a;
+}
 
-    th{
-      background:#0f172a;
-      color:white;
-      padding:12px;
-    }
+.inv-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:20px;
+  margin-bottom:40px;
+}
 
-    td{
-      padding:10px;
-      border-bottom:1px solid #ddd;
-      text-align:center;
-    }
+.inv-card{
+  background:white;
+  padding:20px;
+  border-radius:15px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+  text-align:center;
+}
 
-    tr:hover{
-      background:#f5f5f5;
-    }
+.inv-name{
+  font-size:20px;
+  font-weight:bold;
+  margin-bottom:10px;
+}
 
-  </style>
+.inv-power{
+  font-size:35px;
+  color:green;
+  font-weight:bold;
+}
+
+.chart-box{
+  background:white;
+  padding:20px;
+  border-radius:15px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+  margin-bottom:30px;
+}
+
+canvas{
+  max-height:450px;
+}
+
+</style>
 </head>
+
 <body>
 
 <div class="header">
-  Solar Remote Monitoring Dashboard
+Solar Remote Monitoring Dashboard
 </div>
 
 <div class="container">
 
-  <div class="cards">
+<div class="top-cards">
 
-    <div class="card">
-      <div class="card-title">Current Power</div>
-      <div class="card-value" id="power">0 kW</div>
-    </div>
+<div class="card">
+<div class="card-title">Total Plant Power</div>
+<div class="card-value" id="totalPower">0 kW</div>
+</div>
 
-    <div class="card">
-      <div class="card-title">Daily Energy</div>
-      <div class="card-value" id="energy">0 kWh</div>
-    </div>
+<div class="card">
+<div class="card-title">Total Inverters</div>
+<div class="card-value" id="totalInv">0</div>
+</div>
 
-    <div class="card">
-      <div class="card-title">Voltage</div>
-      <div class="card-value" id="voltage">0 V</div>
-    </div>
+</div>
 
-    <div class="card">
-      <div class="card-title">Temperature</div>
-      <div class="card-value" id="temp">0 °C</div>
-    </div>
+<div class="section-title">
+Live Inverter Power
+</div>
 
-  </div>
+<div class="inv-grid" id="invCards">
 
-  <div class="chart-box">
-    <canvas id="powerChart"></canvas>
-  </div>
+</div>
 
-  <div class="chart-box">
-    <canvas id="energyChart"></canvas>
-  </div>
+<div class="section-title">
+Total Plant Power Trend (6 AM to Now)
+</div>
 
-  <table id="dataTable">
-    <thead>
-      <tr>
-        <th>Date Time</th>
-        <th>Inv ID</th>
-        <th>Power</th>
-        <th>Voltage</th>
-        <th>Temperature</th>
-      </tr>
-    </thead>
-    <tbody>
+<div class="chart-box">
+<canvas id="totalPowerChart"></canvas>
+</div>
 
-    </tbody>
-  </table>
+<div class="section-title">
+Individual Inverter Power Graph
+</div>
+
+<div class="chart-box">
+<canvas id="inverterChart"></canvas>
+</div>
 
 </div>
 
 <script>
 
-const CSV_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnS3pL3JyabVpduc3gZ1JwPUG5LZvw2g4khUwndVmpyBYH91CnS23Y1nVjFWtscBFc4yTfPLDNyzkLv_lkxfx9RkRIJoOETt4WOSwuQG_nSoTVcHymk3CVJm7yUPWTp76Zi2TN-ntmjrTfcmGkUwNTCFs4Md2xxWvua6yiIzsl2qJAlbzM6NQkim_SaMI6X4GDRlSp31g9zB4s1i-HTIyGX6173pj0sMVsDt62Uda5kQZ-hBw1f6_BsWseHiMWkFb2dP228UirJZ9IYTVawvunewO7Lgtw&lib=MCz00kSXntMNG2j8lNix72WIZvkK2cN4n";
+const CSV_URL = "PASTE_YOUR_APPS_SCRIPT_URL_HERE";
+
+let totalChart;
+let inverterChart;
 
 async function loadData(){
 
   const response = await fetch(CSV_URL);
-  const csvText = await response.text();
 
-  const rows = csvText.trim().split("\n");
+  const csv = await response.text();
 
-  let labels = [];
-  let powerData = [];
-  let energyData = [];
+  const rows = csv.trim().split("\n");
 
-  const tbody = document.querySelector("#dataTable tbody");
+  let inverterLatest = {};
 
-  tbody.innerHTML = "";
+  let totalPower = 0;
+
+  let totalTrendLabels = [];
+  let totalTrendData = [];
+
+  let inverterGraphLabels = [];
+  let inverterGraphData = [];
 
   for(let i=1;i<rows.length;i++){
 
@@ -172,75 +184,138 @@ async function loadData(){
     if(cols.length < 10) continue;
 
     const datetime = cols[0];
+
     const invId = cols[1];
 
     const power = parseFloat(cols[8]) || 0;
-    const voltage = parseFloat(cols[5]) || 0;
-    const temp = parseFloat(cols[4]) || 0;
-    const energy = parseFloat(cols[2]) || 0;
 
-    labels.push(datetime);
-    powerData.push(power);
-    energyData.push(energy);
+    // Latest inverter power
+    inverterLatest[invId] = power;
 
-    if(i == rows.length - 1){
+    // Total plant trend
+    totalTrendLabels.push(datetime);
 
-      document.getElementById("power").innerText = power + " kW";
-      document.getElementById("energy").innerText = energy + " kWh";
-      document.getElementById("voltage").innerText = voltage + " V";
-      document.getElementById("temp").innerText = temp + " °C";
-
-    }
-
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${datetime}</td>
-      <td>${invId}</td>
-      <td>${power}</td>
-      <td>${voltage}</td>
-      <td>${temp}</td>
-    `;
-
-    tbody.appendChild(tr);
+    totalTrendData.push(power);
 
   }
 
-  createPowerChart(labels,powerData);
-  createEnergyChart(labels,energyData);
+  // Total inverter power
+  Object.keys(inverterLatest).forEach(inv => {
+
+    totalPower += inverterLatest[inv];
+
+  });
+
+  // Update cards
+  document.getElementById("totalPower").innerText =
+    totalPower.toFixed(2) + " kW";
+
+  document.getElementById("totalInv").innerText =
+    Object.keys(inverterLatest).length;
+
+  // Inverter Cards
+  const invContainer = document.getElementById("invCards");
+
+  invContainer.innerHTML = "";
+
+  Object.keys(inverterLatest).forEach(inv => {
+
+    const power = inverterLatest[inv];
+
+    inverterGraphLabels.push("INV " + inv);
+
+    inverterGraphData.push(power);
+
+    const card = document.createElement("div");
+
+    card.className = "inv-card";
+
+    card.innerHTML = `
+      <div class="inv-name">
+        Inverter ${inv}
+      </div>
+
+      <div class="inv-power">
+        ${power.toFixed(2)} kW
+      </div>
+    `;
+
+    invContainer.appendChild(card);
+
+  });
+
+  createTotalChart(totalTrendLabels,totalTrendData);
+
+  createInverterChart(inverterGraphLabels,inverterGraphData);
 
 }
 
-function createPowerChart(labels,data){
+function createTotalChart(labels,data){
 
-  new Chart(document.getElementById("powerChart"),{
-    type:'line',
-    data:{
-      labels:labels,
-      datasets:[{
-        label:'Power kW',
-        data:data,
-        borderWidth:2,
-        tension:0.3
-      }]
+  if(totalChart){
+    totalChart.destroy();
+  }
+
+  totalChart = new Chart(
+    document.getElementById("totalPowerChart"),
+    {
+      type:'line',
+
+      data:{
+        labels:labels,
+
+        datasets:[{
+          label:'Total Plant Power kW',
+          data:data,
+          fill:false,
+          tension:0.3,
+          borderWidth:2
+        }]
+      },
+
+      options:{
+        responsive:true,
+        scales:{
+          x:{
+            ticks:{
+              maxTicksLimit:10
+            }
+          }
+        }
+      }
+
     }
-  });
+  );
 
 }
 
-function createEnergyChart(labels,data){
+function createInverterChart(labels,data){
 
-  new Chart(document.getElementById("energyChart"),{
-    type:'bar',
-    data:{
-      labels:labels,
-      datasets:[{
-        label:'Energy kWh',
-        data:data,
-        borderWidth:1
-      }]
+  if(inverterChart){
+    inverterChart.destroy();
+  }
+
+  inverterChart = new Chart(
+    document.getElementById("inverterChart"),
+    {
+      type:'bar',
+
+      data:{
+        labels:labels,
+
+        datasets:[{
+          label:'Inverter Power kW',
+          data:data,
+          borderWidth:1
+        }]
+      },
+
+      options:{
+        responsive:true
+      }
+
     }
-  });
+  );
 
 }
 
