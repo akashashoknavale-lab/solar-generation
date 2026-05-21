@@ -4,13 +4,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Solar SCADA Dashboard</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-
 body{
     margin:0;
     font-family:Arial;
@@ -26,35 +24,7 @@ body{
     font-weight:bold;
 }
 
-.container{
-    padding:20px;
-}
-
-.filter-bar{
-    background:white;
-    padding:15px;
-    border-radius:15px;
-    margin-bottom:20px;
-    display:flex;
-    gap:15px;
-    align-items:center;
-    flex-wrap:wrap;
-    box-shadow:0 4px 12px rgba(0,0,0,0.1);
-}
-
-.filter-bar input,
-.filter-bar button{
-    padding:10px;
-    font-size:16px;
-    border-radius:10px;
-    border:1px solid #ccc;
-}
-
-.filter-bar button{
-    background:#0f172a;
-    color:white;
-    cursor:pointer;
-}
+.container{ padding:20px; }
 
 .top-cards{
     display:grid;
@@ -70,16 +40,8 @@ body{
     box-shadow:0 4px 12px rgba(0,0,0,0.1);
 }
 
-.card-title{
-    font-size:24px;
-    color:#666;
-    margin-bottom:10px;
-}
-
-.card-value{
-    font-size:28px;
-    font-weight:bold;
-}
+.card-title{ font-size:18px; color:#666; margin-bottom:10px; }
+.card-value{ font-size:38px; font-weight:bold; }
 
 .section-title{
     font-size:24px;
@@ -102,17 +64,8 @@ body{
     box-shadow:0 4px 12px rgba(0,0,0,0.1);
 }
 
-.inv-name{
-    font-size:16px;
-    font-weight:bold;
-    margin-bottom:10px;
-}
-
-.inv-power{
-    font-size:28px;
-    color:green;
-    font-weight:bold;
-}
+.inv-name{ font-size:20px; font-weight:bold; margin-bottom:10px; }
+.inv-power{ font-size:35px; color:green; font-weight:bold; }
 
 .chart-box{
     background:white;
@@ -123,436 +76,218 @@ body{
     height:450px;
 }
 
-canvas{
-    max-height:420px;
-}
-
-.status{
-    font-size:14px;
-    color:green;
-    font-weight:bold;
-}
-
+canvas{ max-height:420px; }
 </style>
 
 </head>
 
 <body>
 
-<div class="header">
-    Solar Remote Monitoring Dashboard
-</div>
+<div class="header">Solar Remote Monitoring Dashboard</div>
 
 <div class="container">
 
-<!-- FILTER -->
-<div class="filter-bar">
-
-    <label>Select Date:</label>
-
-    <input type="date" id="datePicker">
-
-    <button onclick="loadData()">
-        Load Data
-    </button>
-
-    <div class="status" id="liveStatus">
-        LIVE DATA RUNNING
-    </div>
-
-</div>
-
-<!-- TOP CARDS -->
 <div class="top-cards">
-
     <div class="card">
-        <div class="card-title">
-            Total Plant Generation
-        </div>
-
-        <div class="card-value" id="totalGen">
-            0 kW
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-title">
-            Total Plant Power
-        </div>
-
-        <div class="card-value" id="totalPower">
-            0 kW
-        </div>
+        <div class="card-title">Todays Generation</div>
+        <div class="card-value" id="totalPower">0 kW</div>
     </div>
 
     <div class="card">
-        <div class="card-title">
-            Total Inverters
-        </div>
-
-        <div class="card-value" id="totalInv">
-            0
-        </div>
+        <div class="card-title">Total Inverters</div>
+        <div class="card-value" id="totalInv">0</div>
     </div>
-
 </div>
 
-<!-- INVERTER CARDS -->
-<div class="section-title">
-    Live Inverter Generation
-</div>
-
+<div class="section-title">Live Inverter Power</div>
 <div class="inv-grid" id="invCards"></div>
 
-<!-- TOTAL GRAPH -->
-<div class="section-title">
-    Total Plant Generation Trend (6 AM to 7 PM)
-</div>
-
+<div class="section-title">Total Plant Power Trend (6 AM to 7 PM)</div>
 <div class="chart-box">
-    <canvas id="totalPowerChart"></canvas>
+<canvas id="totalPowerChart"></canvas>
 </div>
 
-<!-- INVERTER GRAPH -->
-<div class="section-title">
-    Inverter Wise Generation
-</div>
-
+<div class="section-title">Inverter Wise Power</div>
 <div class="chart-box">
-    <canvas id="inverterChart"></canvas>
+<canvas id="inverterChart"></canvas>
 </div>
 
 </div>
 
 <script>
 
-// =============================
-// GOOGLE SCRIPT CSV URL
-// =============================
-
-const CSV_URL ="https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnSsZkOVkJ5Ne2Mz7-kmV7G69qfxSUndHCKIWz260A6TGs-J5VfXaRttaIUGKOPaurXDNdSPdgP994snRWZlOzlGQ-tZsQVsEggEjj9R-U167LqfEG0ZEhtoAUEy5Vrj5cz82bU0zc8ETZipZRjeBvO62p7CcVwozry6AkrxnHUOXioIIQ4UmVE_yweB8yHB_tJLb17dzZB3bEU7FleKxABITNq3bIJ-2iwdVIGitMVzcfGgIYZALoOWkTHxi_qjgBgPg2XqhuUggEFP4Jzg47DMqcfDYA&lib=MCz00kSXntMNG2j8lNix72WIZvkK2cN4n";
-// =============================
-// TODAY DATE DEFAULT
-// =============================
-
-document.getElementById("datePicker").value =
-new Date().toISOString().split('T')[0];
-
-// =============================
-// CHART VARIABLES
-// =============================
+// 🔥 GOOGLE SCRIPT CSV URL
+const CSV_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnS3pL3JyabVpduc3gZ1JwPUG5LZvw2g4khUwndVmpyBYH91CnS23Y1nVjFWtscBFc4yTfPLDNyzkLv_lkxfx9RkRIJoOETt4WOSwuQG_nSoTVcHymk3CVJm7yUPWTp76Zi2TN-ntmjrTfcmGkUwNTCFs4Md2xxWvua6yiIzsl2qJAlbzM6NQkim_SaMI6X4GDRlSp31g9zB4s1i-HTIyGX6173pj0sMVsDt62Uda5kQZ-hBw1f6_BsWseHiMWkFb2dP228UirJZ9IYTVawvunewO7Lgtw&lib=MCz00kSXntMNG2j8lNix72WIZvkK2cN4n";
 
 let totalChart;
 let inverterChart;
-
-// =============================
-// LOAD DATA
-// =============================
 
 async function loadData(){
 
 try{
 
-    const response = await fetch(CSV_URL);
-    const csv = await response.text();
+const response = await fetch(CSV_URL);
+const csv = await response.text();
+const rows = csv.trim().split("\n");
 
-    const rows = csv.trim().split("\n");
+// 🔥 hourly bucket (FULL DAY FIX)
+let totalPowerByTime = {};
+for(let h=6; h<=19; h++){
+    let label = (h<10?"0"+h:h)+":00";
+    totalPowerByTime[label] = 0;
+}
 
-    // selected date
-    const selectedDate =
-    document.getElementById("datePicker").value;
+let inverterLatest = {};
+let lastSeen = {};
+let totalPower = 0;
 
-    // status
-    let today =
-    new Date().toISOString().split('T')[0];
+// ----------------------
+// READ CSV
+// ----------------------
+for(let i=1;i<rows.length;i++){
 
-    if(selectedDate === today){
-        document.getElementById("liveStatus").innerText =
-        "LIVE DATA RUNNING";
+    const cols = rows[i].split(",");
+    if(cols.length < 4) continue;
+
+    const datetime = cols[0];
+    const invId = cols[1];
+    const power = parseFloat(cols[3]) || 0;
+
+    let dateObj = new Date(datetime);
+    let hour = dateObj.getHours();
+
+    // store latest inverter value
+    lastSeen[invId] = power;
+
+    // hourly aggregation
+    if(hour >= 6 && hour <= 19){
+        let label = (hour<10?"0"+hour:hour)+":00";
+        totalPowerByTime[label] += power;
     }
-    else{
-        document.getElementById("liveStatus").innerText =
-        "HISTORICAL DATA";
-    }
+}
 
-    // =============================
-    // TIME BUCKETS
-    // =============================
+// assign latest inverter data
+inverterLatest = lastSeen;
 
-    let totalPowerByTime = {};
+// ----------------------
+// TOTAL POWER
+// ----------------------
+Object.values(inverterLatest).forEach(v=>{
+    totalPower += v;
+});
 
-    for(let h=6; h<=19; h++){
+// update cards
+document.getElementById("totalPower").innerText = totalPower.toFixed(2)+" kW";
+document.getElementById("totalInv").innerText = Object.keys(inverterLatest).length;
 
-        let label =
-        (h<10?"0"+h:h)+":00";
+// ----------------------
+// INVERTER CARDS
+// ----------------------
+const invContainer = document.getElementById("invCards");
+invContainer.innerHTML="";
 
-        totalPowerByTime[label] = {
-            sum:0,
-            count:0
-        };
-    }
+let invLabels=[];
+let invData=[];
 
-    let inverterLatest = {};
-    let totalPower = 0;
+Object.keys(inverterLatest).forEach(inv=>{
 
-    // =============================
-    // CSV LOOP
-    // =============================
+    let power = inverterLatest[inv];
 
-    for(let i=1; i<rows.length; i++){
+    invLabels.push("INV "+inv);
+    invData.push(power);
 
-        const cols = rows[i].split(",");
+    invContainer.innerHTML += `
+    <div class="inv-card">
+        <div class="inv-name">Inverter ${inv}</div>
+        <div class="inv-power">${power.toFixed(4)} kW</div>
+    </div>`;
+});
 
-        if(cols.length < 4) continue;
+// ----------------------
+// ORDERED CHART DATA (IMPORTANT FIX)
+// ----------------------
+let labels=[];
+let data=[];
 
-        const datetime = cols[0];
-        const invId = cols[1];
-        const power =
-        parseFloat(cols[3]) || 0;
-        const Gen =
-        parseFloat(cols[4]) || 0;
+for(let h=6; h<=19; h++){
+    let label = (h<10?"0"+h:h)+":00";
+    labels.push(label);
+    data.push(totalPowerByTime[label]);
+}
 
-        
-        let dateObj =
-        new Date(datetime);
-
-        // selected date filter
-        let rowDate =
-        dateObj.toISOString().split('T')[0];
-
-        if(rowDate !== selectedDate)
-        continue;
-
-        let hour =
-        dateObj.getHours();
-
-        // latest inverter power
-        inverterLatest[invId] = power;
-
-        // hourly average
-        if(hour >= 6 && hour <= 19){
-
-            let label =
-            (hour<10?"0"+hour:hour)+":00";
-
-            totalPowerByTime[label].sum += power;
-
-            totalPowerByTime[label].count++;
-        }
-    }
-
-    // =============================
-    // TOTAL POWER
-    // =============================
-
-    Object.values(inverterLatest).forEach(v=>{
-
-        totalPower += v;
-    });
-
-    document.getElementById("totalPower")
-    .innerText =
-    totalPower.toFixed(2)+" kW";
-
-    document.getElementById("totalInv")
-    .innerText =
-    Object.keys(inverterLatest).length;
-
-    // =============================
-    // INVERTER CARDS
-    // =============================
-
-    const invContainer =
-    document.getElementById("invCards");
-
-    invContainer.innerHTML = "";
-
-    let invLabels = [];
-    let invData = [];
-
-    Object.keys(inverterLatest).forEach(inv=>{
-
-        let power =
-        inverterLatest[inv];
-
-        invLabels.push("INV "+inv);
-
-        invData.push(power);
-
-        invContainer.innerHTML += `
-        <div class="inv-card">
-
-            <div class="inv-name">
-                Inverter ${inv}
-            </div>
-
-            <div class="inv-power">
-                ${power.toFixed(2)} kW
-            </div>
-
-        </div>`;
-    });
-
-    // =============================
-    // GRAPH DATA
-    // =============================
-
-    let labels = [];
-    let data = [];
-
-    for(let h=6; h<=19; h++){
-
-        let label =
-        (h<10?"0"+h:h)+":00";
-
-        labels.push(label);
-
-        let avg = 0;
-
-        if(totalPowerByTime[label].count > 0){
-
-            avg =
-            totalPowerByTime[label].sum /
-            totalPowerByTime[label].count;
-        }
-
-        data.push(avg.toFixed(2));
-    }
-
-    // =============================
-    // DRAW CHARTS
-    // =============================
-
-    createTotalChart(labels,data);
-
-    createInverterChart(invLabels,invData);
+// ----------------------
+// DRAW CHARTS
+// ----------------------
+createTotalChart(labels,data);
+createInverterChart(invLabels,invData);
 
 }
 catch(err){
-
-    console.log(err);
-
-    alert("DATA LOAD ERROR");
+console.log(err);
 }
 
 }
 
-// =============================
-// TOTAL POWER LINE CHART
-// =============================
-
+// ----------------------
+// LINE CHART
+// ----------------------
 function createTotalChart(labels,data){
 
-if(totalChart)
-totalChart.destroy();
+if(totalChart) totalChart.destroy();
 
 totalChart = new Chart(
-
 document.getElementById("totalPowerChart"),
-
 {
 type:'line',
-
 data:{
-    labels:labels,
-
-    datasets:[{
-        label:'Total Plant Power (kW)',
-        data:data,
-        borderWidth:3,
-        tension:0.3,
-        fill:false
-    }]
+labels:labels,
+datasets:[{
+label:'Total Plant Power (kW)',
+data:data,
+borderWidth:2,
+tension:0.3,
+fill:false
+}]
 },
-
 options:{
-
-    responsive:true,
-    maintainAspectRatio:false,
-
-    plugins:{
-        legend:{
-            display:true
-        }
-    },
-
-    scales:{
-
-        y:{
-            beginAtZero:true
-        }
-    }
+responsive:true,
+maintainAspectRatio:false
 }
-
 });
-
 }
 
-// =============================
-// INVERTER BAR CHART
-// =============================
-
+// ----------------------
+// BAR CHART
+// ----------------------
 function createInverterChart(labels,data){
 
-if(inverterChart)
-inverterChart.destroy();
+if(inverterChart) inverterChart.destroy();
 
 inverterChart = new Chart(
-
 document.getElementById("inverterChart"),
-
 {
 type:'bar',
-
 data:{
-    labels:labels,
-
-    datasets:[{
-        label:'Inverter Power (kW)',
-        data:data,
-        borderWidth:1
-    }]
+labels:labels,
+datasets:[{
+label:'Inverter Power (kW)',
+data:data
+}]
 },
-
 options:{
-
-    responsive:true,
-    maintainAspectRatio:false,
-
-    scales:{
-
-        y:{
-            beginAtZero:true
-        }
-    }
+responsive:true,
+maintainAspectRatio:false
 }
-
 });
-
 }
 
-// =============================
-// AUTO REFRESH
-// =============================
-
+// AUTO LOAD
 loadData();
-
-setInterval(()=>{
-
-    let selectedDate =
-    document.getElementById("datePicker").value;
-
-    let today =
-    new Date().toISOString().split('T')[0];
-
-    // only auto refresh today data
-    if(selectedDate === today){
-
-        loadData();
-    }
-
-},30000);
+setInterval(loadData,30000);
 
 </script>
 
 </body>
-</html>
+</html> 
+ya code madhye total power pn pahije ji CSV madhye column 19 la ahe
+mla add karun de
