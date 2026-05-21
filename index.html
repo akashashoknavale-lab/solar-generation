@@ -265,22 +265,11 @@ try{
         "HISTORICAL DATA";
     }
 
-    // =============================
-    // TIME BUCKETS
-    // =============================
-
-    let totalPowerByTime = {};
-
-    for(let h=6; h<=19; h++){
-
-        let label =
-        (h<10?"0"+h:h)+":00";
-
-        totalPowerByTime[label] = {
-            sum:0,
-            count:0
-        };
-    }
+        // =============================
+        // TIME DATA
+        // =============================
+        
+        let totalPowerByTime = {};
 
     let inverterLatest = {};
     let totalPower = 0;
@@ -316,15 +305,26 @@ try{
         // latest inverter power
         inverterLatest[invId] = power;
 
-        // hourly average
+      // exact time power
+
         if(hour >= 6 && hour <= 19){
-
+        
+            let minute =
+            dateObj.getMinutes();
+        
+            // 5 min bucket
+            minute =
+            Math.floor(minute/5)*5;
+        
             let label =
-            (hour<10?"0"+hour:hour)+":00";
-
-            totalPowerByTime[label].sum += power;
-
-            totalPowerByTime[label].count++;
+            (hour<10?"0"+hour:hour)+":"+
+            (minute<10?"0"+minute:minute);
+        
+            if(!totalPowerByTime[label]){
+                totalPowerByTime[label] = 0;
+            }
+        
+            totalPowerByTime[label] += power;
         }
     }
 
