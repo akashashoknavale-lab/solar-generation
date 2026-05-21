@@ -290,7 +290,7 @@ try{
         parseFloat(cols[3]) || 0;
 
         let dateObj =
-        new Date(datetime);
+        new Date(datetime.replace(" ","T"));
 
         // selected date filter
         let rowDate =
