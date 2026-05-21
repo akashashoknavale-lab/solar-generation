@@ -265,11 +265,22 @@ try{
         "HISTORICAL DATA";
     }
 
-        // =============================
-        // TIME DATA
-        // =============================
-        
-        let totalPowerByTime = {};
+    // =============================
+    // TIME BUCKETS
+    // =============================
+
+    let totalPowerByTime = {};
+
+    for(let h=6; h<=19; h++){
+
+        let label =
+        (h<10?"0"+h:h)+":00";
+
+        totalPowerByTime[label] = {
+            sum:0,
+            count:0
+        };
+    }
 
     let inverterLatest = {};
     let totalPower = 0;
@@ -278,18 +289,44 @@ try{
     // CSV LOOP
     // =============================
 
-    let labels =
-    Object.keys(totalPowerByTime)
-    .sort((a,b)=>a.localeCompare(b));
-    
-    let data = [];
-    
-    labels.forEach(label=>{
-    
-        data.push(
-            totalPowerByTime[label]
-        );
-    });
+    for(let i=1; i<rows.length; i++){
+
+        const cols = rows[i].split(",");
+
+        if(cols.length < 4) continue;
+
+        const datetime = cols[0];
+        const invId = cols[1];
+        const power =
+        parseFloat(cols[3]) || 0;
+
+        let dateObj =
+        new Date(datetime);
+
+        // selected date filter
+        let rowDate =
+        dateObj.toISOString().split('T')[0];
+
+        if(rowDate !== selectedDate)
+        continue;
+
+        let hour =
+        dateObj.getHours();
+
+        // latest inverter power
+        inverterLatest[invId] = power;
+
+        // hourly average
+        if(hour >= 6 && hour <= 19){
+
+            let label =
+            (hour<10?"0"+hour:hour)+":00";
+
+            totalPowerByTime[label].sum += power;
+
+            totalPowerByTime[label].count++;
+        }
+    }
 
     // =============================
     // TOTAL POWER
@@ -347,15 +384,27 @@ try{
     // GRAPH DATA
     // =============================
 
-    let labels =
-    Object.keys(totalPowerByTime).sort((a,b)=>{
-    
-        return a.localeCompare(b);
-    });
-    
-    let data =
-    labels.map(label =>
-    totalPowerByTime[label].toFixed(2));
+    let labels = [];
+    let data = [];
+
+    for(let h=6; h<=19; h++){
+
+        let label =
+        (h<10?"0"+h:h)+":00";
+
+        labels.push(label);
+
+        let avg = 0;
+
+        if(totalPowerByTime[label].count > 0){
+
+            avg =
+            totalPowerByTime[label].sum /
+            totalPowerByTime[label].count;
+        }
+
+        data.push(avg.toFixed(2));
+    }
 
     // =============================
     // DRAW CHARTS
