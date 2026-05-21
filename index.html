@@ -294,7 +294,9 @@ try{
 
         // selected date filter
         let rowDate =
-        dateObj.toISOString().split('T')[0];
+        dateObj.getFullYear() + "-" +
+        String(dateObj.getMonth()+1).padStart(2,'0') + "-" +
+        String(dateObj.getDate()).padStart(2,'0');
 
         if(rowDate !== selectedDate)
         continue;
@@ -319,12 +321,14 @@ try{
             let label =
             (hour<10?"0"+hour:hour)+":"+
             (minute<10?"0"+minute:minute);
-        
-            if(!totalPowerByTime[label]){
+             if(!totalPowerByTime[label]){
+            
                 totalPowerByTime[label] = 0;
             }
-        
-            totalPowerByTime[label] += power;
+            
+            totalPowerByTime[label] =
+            totalPowerByTime[label] + power;   
+
         }
     }
 
@@ -384,12 +388,15 @@ try{
     // GRAPH DATA
     // =============================
 
-let labels =
-Object.keys(totalPowerByTime).sort();
-
-let data =
-labels.map(label =>
-totalPowerByTime[label].toFixed(2));
+    let labels =
+    Object.keys(totalPowerByTime).sort((a,b)=>{
+    
+        return a.localeCompare(b);
+    });
+    
+    let data =
+    labels.map(label =>
+    totalPowerByTime[label].toFixed(2));
 
     // =============================
     // DRAW CHARTS
