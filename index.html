@@ -71,13 +71,13 @@ body{
 }
 
 .card-title{
-    font-size:18px;
+    font-size:24px;
     color:#666;
     margin-bottom:10px;
 }
 
 .card-value{
-    font-size:38px;
+    font-size:28px;
     font-weight:bold;
 }
 
@@ -103,13 +103,13 @@ body{
 }
 
 .inv-name{
-    font-size:20px;
+    font-size:16px;
     font-weight:bold;
     margin-bottom:10px;
 }
 
 .inv-power{
-    font-size:35px;
+    font-size:28px;
     color:green;
     font-weight:bold;
 }
@@ -167,6 +167,15 @@ canvas{
 
     <div class="card">
         <div class="card-title">
+            Total Plant Generation
+        </div>
+
+        <div class="card-value" id="totalGen">
+            0 kW
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">
             Total Plant Power
         </div>
 
@@ -189,14 +198,14 @@ canvas{
 
 <!-- INVERTER CARDS -->
 <div class="section-title">
-    Live Inverter Power
+    Live Inverter Generation
 </div>
 
 <div class="inv-grid" id="invCards"></div>
 
 <!-- TOTAL GRAPH -->
 <div class="section-title">
-    Total Plant Power Trend (6 AM to 7 PM)
+    Total Plant Generation Trend (6 AM to 7 PM)
 </div>
 
 <div class="chart-box">
@@ -205,7 +214,7 @@ canvas{
 
 <!-- INVERTER GRAPH -->
 <div class="section-title">
-    Inverter Wise Power
+    Inverter Wise Generation
 </div>
 
 <div class="chart-box">
@@ -299,7 +308,10 @@ try{
         const invId = cols[1];
         const power =
         parseFloat(cols[3]) || 0;
+        const Gen =
+        parseFloat(cols[4]) || 0;
 
+        
         let dateObj =
         new Date(datetime);
 
