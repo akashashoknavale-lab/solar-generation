@@ -278,59 +278,18 @@ try{
     // CSV LOOP
     // =============================
 
-    for(let i=1; i<rows.length; i++){
-
-        const cols = rows[i].split(",");
-
-        if(cols.length < 4) continue;
-
-        const datetime = cols[0];
-        const invId = cols[1];
-        const power =
-        parseFloat(cols[3]) || 0;
-
-        let dateObj =
-        new Date(datetime.replace(" ","T"));
-
-        // selected date filter
-        let rowDate =
-        dateObj.getFullYear() + "-" +
-        String(dateObj.getMonth()+1).padStart(2,'0') + "-" +
-        String(dateObj.getDate()).padStart(2,'0');
-
-        if(rowDate !== selectedDate)
-        continue;
-
-        let hour =
-        dateObj.getHours();
-
-        // latest inverter power
-        inverterLatest[invId] = power;
-
-      // exact time power
-
-        if(hour >= 6 && hour <= 19){
-        
-            let minute =
-            dateObj.getMinutes();
-        
-            // 5 min bucket
-            minute =
-            Math.floor(minute/5)*5;
-        
-            let label =
-            (hour<10?"0"+hour:hour)+":"+
-            (minute<10?"0"+minute:minute);
-             if(!totalPowerByTime[label]){
-            
-                totalPowerByTime[label] = 0;
-            }
-            
-            totalPowerByTime[label] =
-            totalPowerByTime[label] + power;   
-
-        }
-    }
+    let labels =
+    Object.keys(totalPowerByTime)
+    .sort((a,b)=>a.localeCompare(b));
+    
+    let data = [];
+    
+    labels.forEach(label=>{
+    
+        data.push(
+            totalPowerByTime[label]
+        );
+    });
 
     // =============================
     // TOTAL POWER
