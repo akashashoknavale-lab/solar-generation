@@ -384,27 +384,12 @@ try{
     // GRAPH DATA
     // =============================
 
-    let labels = [];
-    let data = [];
+let labels =
+Object.keys(totalPowerByTime).sort();
 
-    for(let h=6; h<=19; h++){
-
-        let label =
-        (h<10?"0"+h:h)+":00";
-
-        labels.push(label);
-
-        let avg = 0;
-
-        if(totalPowerByTime[label].count > 0){
-
-            avg =
-            totalPowerByTime[label].sum /
-            totalPowerByTime[label].count;
-        }
-
-        data.push(avg.toFixed(2));
-    }
+let data =
+labels.map(label =>
+totalPowerByTime[label].toFixed(2));
 
     // =============================
     // DRAW CHARTS
