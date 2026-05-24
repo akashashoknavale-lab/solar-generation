@@ -26,17 +26,17 @@ body{
     font-weight:bold;
 }
 
-/* MAIN */
 .container{
     padding:20px;
 }
 
 /* TOP CARDS */
+
 .top-cards{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
     gap:20px;
-    margin-bottom:30px;
+    margin-bottom:25px;
 }
 
 .card{
@@ -53,38 +53,41 @@ body{
 }
 
 .card-value{
-    font-size:38px;
+    font-size:36px;
     font-weight:bold;
 }
 
 /* GRAPH + TABLE */
+
 .middle-section{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:20px;
-    margin-top:20px;
 }
+
+/* CHART */
 
 .chart-box{
     background:white;
     padding:20px;
     border-radius:15px;
     box-shadow:0 4px 12px rgba(0,0,0,0.1);
-    height:500px;
+    height:520px;
 }
 
 canvas{
-    max-height:450px;
+    max-height:470px;
 }
 
 /* TABLE */
+
 .table-box{
     background:white;
     padding:20px;
     border-radius:15px;
     box-shadow:0 4px 12px rgba(0,0,0,0.1);
     overflow:auto;
-    height:500px;
+    height:520px;
 }
 
 table{
@@ -96,14 +99,14 @@ th{
     background:#0f172a;
     color:white;
     padding:12px;
-    font-size:15px;
+    position:sticky;
+    top:0;
 }
 
 td{
-    padding:10px;
+    padding:12px;
     border-bottom:1px solid #ddd;
     text-align:center;
-    font-size:14px;
 }
 
 tr:hover{
@@ -111,6 +114,7 @@ tr:hover{
 }
 
 /* MOBILE */
+
 @media(max-width:900px){
 
 .middle-section{
@@ -127,12 +131,13 @@ tr:hover{
 
 <!-- SITE NAME -->
 <div class="header">
-Parangape Autocast 6MWp
+Paranjape Autocast 6MWp
 </div>
 
 <div class="container">
 
     <!-- TOP CARDS -->
+
     <div class="top-cards">
 
         <div class="card">
@@ -153,24 +158,31 @@ Parangape Autocast 6MWp
     </div>
 
     <!-- GRAPH + TABLE -->
+
     <div class="middle-section">
 
         <!-- GRAPH -->
+
         <div class="chart-box">
+
             <canvas id="powerChart"></canvas>
+
         </div>
 
         <!-- TABLE -->
+
         <div class="table-box">
 
             <table>
 
                 <thead>
+
                     <tr>
                         <th>Inverter</th>
                         <th>Power (kW)</th>
                         <th>Generation (kWh)</th>
                     </tr>
+
                 </thead>
 
                 <tbody id="tableData"></tbody>
@@ -185,41 +197,44 @@ Parangape Autocast 6MWp
 
 <script>
 
-// ============================
-// GOOGLE CSV URL
-// ============================
+// =====================================
+// GOOGLE SCRIPT CSV URL
+// =====================================
 
 const CSV_URL = "https://script.google.com/u/0/home/projects/1VKVrQVYymp9sAf07df5XeJy9lNinBJDlm8HBpzDMkWRhQ2XdnjwwR1dF/edit";
 
-// ============================
+// =====================================
 // CHART VARIABLE
-// ============================
+// =====================================
 
 let powerChart;
 
-// ============================
-// LOAD DATA
-// ============================
+// =====================================
+// LOAD CSV DATA
+// =====================================
 
 async function loadData(){
 
 try{
 
 const response = await fetch(CSV_URL);
+
 const csv = await response.text();
 
 const rows = csv.trim().split("\n");
 
-// ============================
+// =====================================
 // VARIABLES
-// ============================
+// =====================================
 
 let inverterData = {};
 
 let totalLivePower = 0;
+
 let totalGeneration = 0;
 
-// 6AM TO 7PM
+// 6AM TO 7PM DATA
+
 let hourlyPower = {};
 
 for(let h=6; h<=19; h++){
@@ -229,48 +244,47 @@ for(let h=6; h<=19; h++){
     hourlyPower[label] = 0;
 }
 
-// ============================
+// =====================================
 // READ CSV
-// ============================
+// =====================================
 
-for(let i=1;i<rows.length;i++){
+for(let i=1; i<rows.length; i++){
 
     let cols = rows[i].split(",");
 
     if(cols.length < 20) continue;
 
-    // ============================
-    // CHANGE COLUMNS IF NEEDED
-    // ============================
+    // =====================================
+    // CSV COLUMN MAPPING
+    // =====================================
 
-    let datetime = cols[0];
+    let datetime   = cols[0];   // 1st column
+    let inverterId = cols[1];   // 2nd column
+    let generation = parseFloat(cols[2]) || 0;   // 3rd column
+    let power      = parseFloat(cols[19]) || 0;  // 20th column
 
-    let inverter = cols[1];
+    // =====================================
+    // STORE LATEST INVERTER DATA
+    // =====================================
 
-    let generation = parseFloat(cols[18]) || 0;
+    inverterData[inverterId] = {
 
-    let power = parseFloat(cols[19]) || 0;
-
-    // ============================
-    // STORE LATEST VALUES
-    // ============================
-
-    inverterData[inverter] = {
         power:power,
         generation:generation
+
     };
 
-    // ============================
+    // =====================================
     // TOTALS
-    // ============================
+    // =====================================
 
     totalLivePower += power;
 
     totalGeneration += generation;
 
-    // ============================
-    // HOURLY CHART
-    // ============================
+    // =====================================
+    // HOURLY CHART DATA
+    // =====================================
 
     let dateObj = new Date(datetime);
 
@@ -285,28 +299,29 @@ for(let i=1;i<rows.length;i++){
 
 }
 
-// ============================
+// =====================================
 // PERFORMANCE
-// ============================
+// =====================================
 
-let performance = (totalGeneration / 36000) * 100;
+let performance =
+((totalGeneration / 36000) * 100);
 
-// ============================
-// UPDATE CARDS
-// ============================
+// =====================================
+// UPDATE TOP CARDS
+// =====================================
 
 document.getElementById("todayGen").innerText =
-totalGeneration.toFixed(2)+" kWh";
+totalGeneration.toFixed(2) + " kWh";
 
 document.getElementById("livePower").innerText =
-totalLivePower.toFixed(2)+" kW";
+totalLivePower.toFixed(2) + " kW";
 
 document.getElementById("performance").innerText =
-performance.toFixed(2)+" %";
+performance.toFixed(2) + " %";
 
-// ============================
+// =====================================
 // UPDATE TABLE
-// ============================
+// =====================================
 
 let tableHtml = "";
 
@@ -327,13 +342,15 @@ Object.keys(inverterData).slice(0,15).forEach(inv=>{
     `;
 });
 
-document.getElementById("tableData").innerHTML = tableHtml;
+document.getElementById("tableData").innerHTML =
+tableHtml;
 
-// ============================
-// CHART DATA
-// ============================
+// =====================================
+// CHART LABELS + DATA
+// =====================================
 
 let labels = [];
+
 let data = [];
 
 for(let h=6; h<=19; h++){
@@ -345,9 +362,9 @@ for(let h=6; h<=19; h++){
     data.push(hourlyPower[label]);
 }
 
-// ============================
-// DRAW CHART
-// ============================
+// =====================================
+// DRAW GRAPH
+// =====================================
 
 drawChart(labels,data);
 
@@ -360,9 +377,9 @@ console.log(err);
 
 }
 
-// ============================
-// DRAW LINE CHART
-// ============================
+// =====================================
+// DRAW CHART
+// =====================================
 
 function drawChart(labels,data){
 
@@ -406,9 +423,9 @@ document.getElementById("powerChart"),
 
 }
 
-// ============================
+// =====================================
 // AUTO REFRESH
-// ============================
+// =====================================
 
 loadData();
 
@@ -417,4 +434,5 @@ setInterval(loadData,30000);
 </script>
 
 </body>
+
 </html>
