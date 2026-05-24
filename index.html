@@ -26,7 +26,7 @@ body{
     color:white;
     text-align:center;
     padding:22px;
-    font-size:24px;
+    font-size:32px;
     font-weight:bold;
 }
 
@@ -50,7 +50,7 @@ body{
 .card{
 
     background:white;
-    border-radius:20px;
+    border-radius:15px;
     padding:25px;
     box-shadow:0 4px 12px rgba(0,0,0,0.1);
 
@@ -58,7 +58,7 @@ body{
 
 .card-title{
 
-    font-size:24px;
+    font-size:18px;
     color:#666;
     margin-bottom:10px;
 
@@ -66,7 +66,7 @@ body{
 
 .card-value{
 
-    font-size:18px;
+    font-size:36px;
     font-weight:bold;
 
 }
@@ -81,12 +81,12 @@ body{
 
 }
 
-/* CHART */
+/* GRAPH */
 
 .chart-box{
 
     background:white;
-    border-radius:20px;
+    border-radius:15px;
     padding:20px;
     box-shadow:0 4px 12px rgba(0,0,0,0.1);
     height:550px;
@@ -165,7 +165,8 @@ tr:hover{
 
 <div class="header">
 
-Pranajape Autocast 6MWp
+    YOUR SOLAR SITE NAME
+
 </div>
 
 <div class="container">
@@ -255,7 +256,7 @@ Pranajape Autocast 6MWp
 <script>
 
 // =====================================================
-// GOOGLE SCRIPT CSV URL
+// GOOGLE CSV URL
 // =====================================================
 
 const CSV_URL =
@@ -273,7 +274,7 @@ async function loadData(){
 
 try{
 
-    // FORCE LATEST CSV EVERY TIME
+    // ALWAYS FETCH LATEST CSV
 
     const response = await fetch(
         CSV_URL + "&t=" + new Date().getTime()
@@ -284,25 +285,23 @@ try{
     const rows = csv.trim().split("\n");
 
     // =====================================================
+    // VARIABLES
+    // =====================================================
 
     let inverterData = {};
 
-    let totalGeneration = 0;
+    let latestInvData = {};
 
-    let totalLivePower = 0;
+    let hourlyPlantPower = {};
 
-    // =====================================================
-    // HOURLY STORAGE
-    // =====================================================
-
-    let hourlyPower = {};
+    // 6AM TO 7PM
 
     for(let h=6; h<=19; h++){
 
         let label =
         (h<10?"0"+h:h)+":00";
 
-        hourlyPower[label] = [];
+        hourlyPlantPower[label] = {};
 
     }
 
@@ -326,7 +325,7 @@ try{
         let inverterId =
         cols[1]?.trim();
 
-        // inv_dayyld
+        // GENERATION COLUMN
 
         let generation =
         parseFloat(cols[3]) || 0;
@@ -334,26 +333,7 @@ try{
         // POWER COLUMN
 
         let power =
-        parseFloat(cols[18]) || 0;
-
-        // =====================================================
-        // STORE LATEST INV VALUES
-        // =====================================================
-
-        inverterData[inverterId] = {
-
-            power:power,
-            generation:generation
-
-        };
-
-        // =====================================================
-        // TOTALS
-        // =====================================================
-
-        totalGeneration += generation;
-
-        totalLivePower += power;
+        parseFloat(cols[19]) || 0;
 
         // =====================================================
         // DATE
@@ -368,7 +348,18 @@ try{
         dateObj.getHours();
 
         // =====================================================
-        // STORE EACH HOUR DATA
+        // STORE LATEST INV DATA
+        // =====================================================
+
+        latestInvData[inverterId] = {
+
+            power:power,
+            generation:generation
+
+        };
+
+        // =====================================================
+        // STORE HOUR WISE DATA
         // =====================================================
 
         if(hour >= 6 && hour <= 19){
@@ -376,14 +367,36 @@ try{
             let label =
             (hour<10?"0"+hour:hour)+":00";
 
-            hourlyPower[label].push(power);
+            // STORE LATEST POWER OF EACH INV
+            // FOR THAT HOUR
+
+            hourlyPlantPower[label][inverterId] =
+            power;
 
         }
 
     }
 
     // =====================================================
-    // PERFORMANCE %
+    // FINAL TOTALS
+    // =====================================================
+
+    let totalGeneration = 0;
+
+    let totalLivePower = 0;
+
+    Object.keys(latestInvData).forEach(inv=>{
+
+        totalGeneration +=
+        latestInvData[inv].generation;
+
+        totalLivePower +=
+        latestInvData[inv].power;
+
+    });
+
+    // =====================================================
+    // PERFORMANCE
     // =====================================================
 
     let performance =
@@ -406,12 +419,12 @@ try{
     performance.toFixed(2)+" %";
 
     // =====================================================
-    // UPDATE TABLE
+    // TABLE
     // =====================================================
 
     let html = "";
 
-    Object.keys(inverterData)
+    Object.keys(latestInvData)
     .slice(0,15)
     .forEach(inv=>{
 
@@ -424,12 +437,12 @@ try{
             </td>
 
             <td>
-                ${inverterData[inv]
+                ${latestInvData[inv]
                 .power.toFixed(2)}
             </td>
 
             <td>
-                ${inverterData[inv]
+                ${latestInvData[inv]
                 .generation.toFixed(2)}
             </td>
 
@@ -443,7 +456,7 @@ try{
     "tableBody").innerHTML = html;
 
     // =====================================================
-    // FINAL HOURLY GRAPH
+    // FINAL GRAPH
     // =====================================================
 
     let labels = [];
@@ -457,27 +470,17 @@ try{
 
         labels.push(label);
 
-        let values =
-        hourlyPower[label];
+        let totalHourPower = 0;
 
-        if(values.length > 0){
+        Object.values(
+            hourlyPlantPower[label]
+        ).forEach(v=>{
 
-            // AVERAGE OF THAT HOUR
+            totalHourPower += v;
 
-            let sum =
-            values.reduce((a,b)=>a+b,0);
+        });
 
-            let avg =
-            sum / values.length;
-
-            data.push(avg);
-
-        }
-        else{
-
-            data.push(0);
-
-        }
+        data.push(totalHourPower);
 
     }
 
@@ -534,7 +537,7 @@ document.getElementById("powerChart"),
 
             borderWidth:3,
 
-            pointRadius:0
+            pointRadius:3
 
         }]
 
@@ -598,7 +601,7 @@ loadData();
 // AUTO REFRESH EVERY 1 MIN
 // =====================================================
 
-setInterval(loadData,10000);
+setInterval(loadData,60000);
 
 </script>
 
