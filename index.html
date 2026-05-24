@@ -165,7 +165,8 @@ tr:hover{
 
 <div class="header">
 
-para
+    YOUR SOLAR SITE NAME
+
 </div>
 
 <div class="container">
@@ -254,32 +255,36 @@ para
 
 <script>
 
-// ===========================================
+// =====================================================
 // GOOGLE SCRIPT CSV URL
-// ===========================================
+// =====================================================
 
 const CSV_URL =
 "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnS3pL3JyabVpduc3gZ1JwPUG5LZvw2g4khUwndVmpyBYH91CnS23Y1nVjFWtscBFc4yTfPLDNyzkLv_lkxfx9RkRIJoOETt4WOSwuQG_nSoTVcHymk3CVJm7yUPWTp76Zi2TN-ntmjrTfcmGkUwNTCFs4Md2xxWvua6yiIzsl2qJAlbzM6NQkim_SaMI6X4GDRlSp31g9zB4s1i-HTIyGX6173pj0sMVsDt62Uda5kQZ-hBw1f6_BsWseHiMWkFb2dP228UirJZ9IYTVawvunewO7Lgtw&lib=MCz00kSXntMNG2j8lNix72WIZvkK2cN4n";
 
-// ===========================================
+// =====================================================
 
 let powerChart;
 
-// ===========================================
+// =====================================================
 // LOAD DATA
-// ===========================================
+// =====================================================
 
 async function loadData(){
 
 try{
 
-    const response = await fetch(CSV_URL);
+    // FORCE LATEST CSV EVERY TIME
+
+    const response = await fetch(
+        CSV_URL + "&t=" + new Date().getTime()
+    );
 
     const csv = await response.text();
 
     const rows = csv.trim().split("\n");
 
-    // ===========================================
+    // =====================================================
 
     let inverterData = {};
 
@@ -287,7 +292,9 @@ try{
 
     let totalLivePower = 0;
 
-    // HOURLY POWER
+    // =====================================================
+    // HOURLY STORAGE
+    // =====================================================
 
     let hourlyPower = {};
 
@@ -296,23 +303,23 @@ try{
         let label =
         (h<10?"0"+h:h)+":00";
 
-        hourlyPower[label] = 0;
+        hourlyPower[label] = [];
 
     }
 
-    // ===========================================
+    // =====================================================
     // CSV LOOP
-    // ===========================================
+    // =====================================================
 
     for(let i=1; i<rows.length; i++){
 
         let cols = rows[i].split(",");
 
-        if(cols.length < 4) continue;
+        if(cols.length < 20) continue;
 
-        // ===========================================
+        // =====================================================
         // COLUMN MAPPING
-        // ===========================================
+        // =====================================================
 
         let datetime =
         cols[0]?.trim();
@@ -321,14 +328,18 @@ try{
         cols[1]?.trim();
 
         // inv_dayyld
+
         let generation =
         parseFloat(cols[3]) || 0;
 
         // POWER COLUMN
+
         let power =
         parseFloat(cols[19]) || 0;
 
-        // ===========================================
+        // =====================================================
+        // STORE LATEST INV VALUES
+        // =====================================================
 
         inverterData[inverterId] = {
 
@@ -337,13 +348,17 @@ try{
 
         };
 
+        // =====================================================
+        // TOTALS
+        // =====================================================
+
         totalGeneration += generation;
 
         totalLivePower += power;
 
-        // ===========================================
-        // CHART DATA
-        // ===========================================
+        // =====================================================
+        // DATE
+        // =====================================================
 
         let dateObj =
         new Date(datetime);
@@ -353,33 +368,31 @@ try{
         let hour =
         dateObj.getHours();
 
+        // =====================================================
+        // STORE EACH HOUR DATA
+        // =====================================================
+
         if(hour >= 6 && hour <= 19){
 
             let label =
             (hour<10?"0"+hour:hour)+":00";
 
-            // SMOOTH GRAPH FIX
-
-            hourlyPower[label] =
-            Math.max(
-                hourlyPower[label],
-                totalLivePower
-            );
+            hourlyPower[label].push(power);
 
         }
 
     }
 
-    // ===========================================
-    // PERFORMANCE
-    // ===========================================
+    // =====================================================
+    // PERFORMANCE %
+    // =====================================================
 
     let performance =
     ((totalGeneration / 36000) * 100);
 
-    // ===========================================
+    // =====================================================
     // UPDATE CARDS
-    // ===========================================
+    // =====================================================
 
     document.getElementById(
     "todayGeneration").innerText =
@@ -393,9 +406,9 @@ try{
     "performance").innerText =
     performance.toFixed(2)+" %";
 
-    // ===========================================
-    // TABLE
-    // ===========================================
+    // =====================================================
+    // UPDATE TABLE
+    // =====================================================
 
     let html = "";
 
@@ -430,9 +443,9 @@ try{
     document.getElementById(
     "tableBody").innerHTML = html;
 
-    // ===========================================
-    // GRAPH LABELS + DATA
-    // ===========================================
+    // =====================================================
+    // FINAL HOURLY GRAPH
+    // =====================================================
 
     let labels = [];
 
@@ -445,11 +458,31 @@ try{
 
         labels.push(label);
 
-        data.push(hourlyPower[label]);
+        let values =
+        hourlyPower[label];
+
+        if(values.length > 0){
+
+            // AVERAGE OF THAT HOUR
+
+            let sum =
+            values.reduce((a,b)=>a+b,0);
+
+            let avg =
+            sum / values.length;
+
+            data.push(avg);
+
+        }
+        else{
+
+            data.push(0);
+
+        }
 
     }
 
-    // ===========================================
+    // =====================================================
 
     drawChart(labels,data);
 
@@ -462,9 +495,9 @@ catch(err){
 
 }
 
-// ===========================================
+// =====================================================
 // DRAW CHART
-// ===========================================
+// =====================================================
 
 function drawChart(labels,data){
 
@@ -500,7 +533,7 @@ document.getElementById("powerChart"),
 
             tension:0.4,
 
-            borderWidth:2,
+            borderWidth:3,
 
             pointRadius:0
 
@@ -556,15 +589,15 @@ document.getElementById("powerChart"),
 
 }
 
-// ===========================================
+// =====================================================
 // INITIAL LOAD
-// ===========================================
+// =====================================================
 
 loadData();
 
-// ===========================================
-// AUTO REFRESH EVERY 1 MINUTE
-// ===========================================
+// =====================================================
+// AUTO REFRESH EVERY 1 MIN
+// =====================================================
 
 setInterval(loadData,60000);
 
