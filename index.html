@@ -66,7 +66,7 @@ body{
 
 .card-value{
 
-    font-size:38px;
+    font-size:36px;
     font-weight:bold;
 
 }
@@ -81,7 +81,7 @@ body{
 
 }
 
-/* GRAPH */
+/* CHART */
 
 .chart-box{
 
@@ -89,13 +89,13 @@ body{
     border-radius:15px;
     padding:20px;
     box-shadow:0 4px 12px rgba(0,0,0,0.1);
-    height:520px;
+    height:550px;
 
 }
 
 canvas{
 
-    max-height:470px;
+    max-height:500px;
 
 }
 
@@ -107,7 +107,7 @@ canvas{
     border-radius:15px;
     padding:20px;
     box-shadow:0 4px 12px rgba(0,0,0,0.1);
-    height:520px;
+    height:550px;
     overflow:auto;
 
 }
@@ -165,7 +165,7 @@ tr:hover{
 
 <div class="header">
 
-paranjpe
+para
 </div>
 
 <div class="container">
@@ -176,36 +176,36 @@ paranjpe
 
         <div class="card">
 
-            <div class="card-title">Today Generation</div>
+            <div class="card-title">
+                Today Generation
+            </div>
 
             <div class="card-value" id="todayGeneration">
-
                 0 kWh
-
             </div>
 
         </div>
 
         <div class="card">
 
-            <div class="card-title">Live Power</div>
+            <div class="card-title">
+                Live Power
+            </div>
 
             <div class="card-value" id="livePower">
-
                 0 kW
-
             </div>
 
         </div>
 
         <div class="card">
 
-            <div class="card-title">Performance</div>
+            <div class="card-title">
+                Performance
+            </div>
 
             <div class="card-value" id="performance">
-
                 0 %
-
             </div>
 
         </div>
@@ -235,8 +235,8 @@ paranjpe
                     <tr>
 
                         <th>INV</th>
-                        <th>Power</th>
-                        <th>Generation</th>
+                        <th>Power (kW)</th>
+                        <th>Generation (kWh)</th>
 
                     </tr>
 
@@ -254,19 +254,20 @@ paranjpe
 
 <script>
 
-// ========================================
+// ===========================================
 // GOOGLE SCRIPT CSV URL
-// ========================================
+// ===========================================
 
 const CSV_URL =
-"https://script.google.com/macros/s/AKfycby1muZxiS7bnicANAKjbzgJKSf9Vudl9ENkMcuRCeNJhxIHg4uJKPjCmMpfMUCEb1w-/exec";
-// ========================================
+"https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnS3pL3JyabVpduc3gZ1JwPUG5LZvw2g4khUwndVmpyBYH91CnS23Y1nVjFWtscBFc4yTfPLDNyzkLv_lkxfx9RkRIJoOETt4WOSwuQG_nSoTVcHymk3CVJm7yUPWTp76Zi2TN-ntmjrTfcmGkUwNTCFs4Md2xxWvua6yiIzsl2qJAlbzM6NQkim_SaMI6X4GDRlSp31g9zB4s1i-HTIyGX6173pj0sMVsDt62Uda5kQZ-hBw1f6_BsWseHiMWkFb2dP228UirJZ9IYTVawvunewO7Lgtw&lib=MCz00kSXntMNG2j8lNix72WIZvkK2cN4n";
+
+// ===========================================
 
 let powerChart;
 
-// ========================================
+// ===========================================
 // LOAD DATA
-// ========================================
+// ===========================================
 
 async function loadData(){
 
@@ -278,7 +279,7 @@ try{
 
     const rows = csv.trim().split("\n");
 
-    // ========================================
+    // ===========================================
 
     let inverterData = {};
 
@@ -286,33 +287,32 @@ try{
 
     let totalLivePower = 0;
 
-    // 6AM TO 7PM
+    // HOURLY POWER
 
     let hourlyPower = {};
 
     for(let h=6; h<=19; h++){
 
-        let label = (h<10?"0"+h:h)+":00";
+        let label =
+        (h<10?"0"+h:h)+":00";
 
         hourlyPower[label] = 0;
 
     }
 
-    // ========================================
+    // ===========================================
     // CSV LOOP
-    // ========================================
+    // ===========================================
 
     for(let i=1; i<rows.length; i++){
 
         let cols = rows[i].split(",");
 
-        // SAFETY
-
         if(cols.length < 4) continue;
 
-        // ========================================
+        // ===========================================
         // COLUMN MAPPING
-        // ========================================
+        // ===========================================
 
         let datetime =
         cols[0]?.trim();
@@ -325,12 +325,10 @@ try{
         parseFloat(cols[3]) || 0;
 
         // POWER COLUMN
-        // CHANGE IF NEEDED
-
         let power =
         parseFloat(cols[19]) || 0;
 
-        // ========================================
+        // ===========================================
 
         inverterData[inverterId] = {
 
@@ -343,37 +341,45 @@ try{
 
         totalLivePower += power;
 
-        // ========================================
-        // HOURLY CHART
-        // ========================================
+        // ===========================================
+        // CHART DATA
+        // ===========================================
 
-        let dateObj = new Date(datetime);
+        let dateObj =
+        new Date(datetime);
 
         if(isNaN(dateObj)) continue;
 
-        let hour = dateObj.getHours();
+        let hour =
+        dateObj.getHours();
 
         if(hour >= 6 && hour <= 19){
 
             let label =
             (hour<10?"0"+hour:hour)+":00";
 
-            hourlyPower[label] += power;
+            // SMOOTH GRAPH FIX
+
+            hourlyPower[label] =
+            Math.max(
+                hourlyPower[label],
+                totalLivePower
+            );
 
         }
 
     }
 
-    // ========================================
+    // ===========================================
     // PERFORMANCE
-    // ========================================
+    // ===========================================
 
     let performance =
     ((totalGeneration / 36000) * 100);
 
-    // ========================================
+    // ===========================================
     // UPDATE CARDS
-    // ========================================
+    // ===========================================
 
     document.getElementById(
     "todayGeneration").innerText =
@@ -387,9 +393,9 @@ try{
     "performance").innerText =
     performance.toFixed(2)+" %";
 
-    // ========================================
+    // ===========================================
     // TABLE
-    // ========================================
+    // ===========================================
 
     let html = "";
 
@@ -401,7 +407,9 @@ try{
 
         <tr>
 
-            <td>INV ${inv}</td>
+            <td>
+                INV ${inv}
+            </td>
 
             <td>
                 ${inverterData[inv]
@@ -422,9 +430,9 @@ try{
     document.getElementById(
     "tableBody").innerHTML = html;
 
-    // ========================================
-    // GRAPH DATA
-    // ========================================
+    // ===========================================
+    // GRAPH LABELS + DATA
+    // ===========================================
 
     let labels = [];
 
@@ -441,20 +449,22 @@ try{
 
     }
 
+    // ===========================================
+
     drawChart(labels,data);
 
 }
 catch(err){
 
-    console.log("ERROR :",err);
+    console.log(err);
 
 }
 
 }
 
-// ========================================
+// ===========================================
 // DRAW CHART
-// ========================================
+// ===========================================
 
 function drawChart(labels,data){
 
@@ -481,11 +491,18 @@ document.getElementById("powerChart"),
 
             data:data,
 
-            borderWidth:3,
+            borderColor:'#2196f3',
+
+            backgroundColor:
+            'rgba(33,150,243,0.20)',
+
+            fill:true,
 
             tension:0.4,
 
-            fill:false
+            borderWidth:2,
+
+            pointRadius:0
 
         }]
 
@@ -495,7 +512,43 @@ document.getElementById("powerChart"),
 
         responsive:true,
 
-        maintainAspectRatio:false
+        maintainAspectRatio:false,
+
+        interaction:{
+            intersect:false,
+            mode:'index'
+        },
+
+        plugins:{
+
+            legend:{
+                display:true
+            }
+
+        },
+
+        scales:{
+
+            x:{
+
+                grid:{
+                    display:false
+                }
+
+            },
+
+            y:{
+
+                beginAtZero:true,
+
+                title:{
+                    display:true,
+                    text:'Power (kW)'
+                }
+
+            }
+
+        }
 
     }
 
@@ -503,13 +556,17 @@ document.getElementById("powerChart"),
 
 }
 
-// ========================================
-// AUTO REFRESH
-// ========================================
+// ===========================================
+// INITIAL LOAD
+// ===========================================
 
 loadData();
 
-setInterval(loadData,30000);
+// ===========================================
+// AUTO REFRESH EVERY 1 MINUTE
+// ===========================================
+
+setInterval(loadData,60000);
 
 </script>
 
