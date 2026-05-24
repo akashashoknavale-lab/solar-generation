@@ -339,13 +339,31 @@ try{
         // DATE
         // =====================================================
 
-        let dateObj =
-        new Date(datetime);
-
-        if(isNaN(dateObj)) continue;
-
+        //
+        // DATETIME FORMAT:
+        // 2026-05-24 15:32:11
+        //
+        
+        if(!datetime.includes(":")) continue;
+        
+        // SPLIT DATE + TIME
+        
+        let parts =
+        datetime.split(" ");
+        
+        if(parts.length < 2) continue;
+        
+        // GET TIME
+        
+        let timePart =
+        parts[1];
+        
+        // GET HOUR
+        
         let hour =
-        dateObj.getHours();
+        parseInt(timePart.split(":")[0]);
+        
+        if(isNaN(hour)) continue;
 
         // =====================================================
         // STORE LATEST INV DATA
