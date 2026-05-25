@@ -325,7 +325,7 @@ try{
 
         latestInvData[inverterId] = {
 
-            power:power,
+            power:power/1000,
             generation:generation
 
         };
@@ -360,7 +360,7 @@ try{
         latestInvData[inv].generation;
 
         totalLivePower +=
-        latestInvData[inv].power;
+        latestInvData[inv].power/1000;
 
     });
 
@@ -572,7 +572,7 @@ loadData();
 // REFRESH EVERY 1 MIN
 // ===================================================
 
-setInterval(loadData,60000);
+setInterval(loadData,5000);
 
 </script>
 
