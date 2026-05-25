@@ -49,13 +49,13 @@ body{
 }
 
 .card-title{
-    font-size:18px;
+    font-size:24px;
     color:#666;
     margin-bottom:10px;
 }
 
 .card-value{
-    font-size:36px;
+    font-size:28px;
     font-weight:bold;
 }
 
@@ -135,8 +135,7 @@ tr:hover{
 
 <div class="header">
 
-    YOUR SOLAR SITE NAME
-
+Paranjape Autocast 6MWp
 </div>
 
 <div class="container">
@@ -325,7 +324,7 @@ try{
 
         latestInvData[inverterId] = {
 
-            power:power/10,
+            power:power,
             generation:generation
 
         };
@@ -369,7 +368,7 @@ try{
     // ===================================================
 
     let performance =
-    ((totalGeneration / 36000) * 100);
+    ((totalGeneration /totalGeneration*1.2 ) * 100);
 
     // ===================================================
     // UPDATE CARDS
