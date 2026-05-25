@@ -325,7 +325,7 @@ try{
 
         latestInvData[inverterId] = {
 
-            power:power/1000,
+            power:power/10,
             generation:generation
 
         };
@@ -360,7 +360,7 @@ try{
         latestInvData[inv].generation;
 
         totalLivePower +=
-        latestInvData[inv].power/1000;
+        latestInvData[inv].power/10;
 
     });
 
