@@ -324,7 +324,7 @@ try{
 
         latestInvData[inverterId] = {
 
-            power:power/30,
+            power:power/100,
             generation:generation
 
         };
@@ -359,7 +359,7 @@ try{
         latestInvData[inv].generation;
 
         totalLivePower +=
-        latestInvData[inv].power/30;
+        latestInvData[inv].power/3;
 
     });
 
@@ -368,7 +368,7 @@ try{
     // ===================================================
 
     let performance =
-    ((totalGeneration /totalGeneration*1.2 ) * 100);
+    ((totalGeneration /(totalGeneration*1.2) ) * 100);
 
     // ===================================================
     // UPDATE CARDS
