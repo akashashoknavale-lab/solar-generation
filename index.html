@@ -2,579 +2,667 @@
 <html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar SCADA Dashboard</title>
+    <script src="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/chart.js)"></script>
+    <link href="[fonts.googleapis.com](https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap)" rel="stylesheet">
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<title>Solar SCADA Dashboard</title>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        /* HEADER */
+        .header {
+            background: linear-gradient(90deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
 
-<style>
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
 
-body{
-    margin:0;
-    padding:0;
-    font-family:Arial;
-    background:#f1f5f9;
-}
+        .solar-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+        }
 
-.header{
-    background:#0f172a;
-    color:white;
-    text-align:center;
-    padding:22px;
-    font-size:32px;
-    font-weight:bold;
-}
+        .header-title {
+            font-size: 26px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-.container{
-    padding:20px;
-}
+        .header-subtitle {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 2px;
+        }
 
-/* TOP CARDS */
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
 
-.top-cards{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-    gap:20px;
-    margin-bottom:25px;
-}
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(34, 197, 94, 0.15);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
 
-.card{
-    background:white;
-    border-radius:15px;
-    padding:25px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.1);
-}
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
 
-.card-title{
-    font-size:24px;
-    color:#666;
-    margin-bottom:10px;
-}
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            50% { opacity: 0.8; box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+        }
 
-.card-value{
-    font-size:28px;
-    font-weight:bold;
-}
+        .last-update {
+            font-size: 12px;
+            color: #64748b;
+        }
 
-/* MIDDLE */
+        /* CONTAINER */
+        .container {
+            padding: 25px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
 
-.middle-section{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:20px;
-}
+        /* TOP CARDS */
+        .top-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
 
-/* GRAPH */
+        .card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
 
-.chart-box{
-    background:white;
-    border-radius:15px;
-    padding:20px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.1);
-    height:550px;
-}
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
 
-canvas{
-    max-height:500px;
-}
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            border-radius: 16px 16px 0 0;
+        }
 
-/* TABLE */
+        .card.generation::before { background: linear-gradient(90deg, #22c55e, #16a34a); }
+        .card.power::before { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+        .card.performance::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .card.capacity::before { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
 
-.table-box{
-    background:white;
-    border-radius:15px;
-    padding:20px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.1);
-    height:550px;
-    overflow:auto;
-}
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
 
-table{
-    width:100%;
-    border-collapse:collapse;
-}
+        .card.generation .card-icon { background: rgba(34, 197, 94, 0.2); }
+        .card.power .card-icon { background: rgba(59, 130, 246, 0.2); }
+        .card.performance .card-icon { background: rgba(245, 158, 11, 0.2); }
+        .card.capacity .card-icon { background: rgba(139, 92, 246, 0.2); }
 
-th{
-    background:#0f172a;
-    color:white;
-    padding:12px;
-    position:sticky;
-    top:0;
-}
+        .card-title {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
 
-td{
-    padding:12px;
-    border-bottom:1px solid #ddd;
-    text-align:center;
-}
+        .card-value {
+            font-size: 32px;
+            font-weight: 700;
+        }
 
-tr:hover{
-    background:#f5f5f5;
-}
+        .card.generation .card-value { color: #22c55e; }
+        .card.power .card-value { color: #3b82f6; }
+        .card.performance .card-value { color: #f59e0b; }
+        .card.capacity .card-value { color: #8b5cf6; }
 
-/* MOBILE */
+        .card-change {
+            font-size: 13px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
 
-@media(max-width:900px){
+        .card-change.positive { color: #22c55e; }
+        .card-change.negative { color: #ef4444; }
 
-.middle-section{
-    grid-template-columns:1fr;
-}
+        /* MIDDLE SECTION */
+        .middle-section {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 20px;
+        }
 
-}
+        /* CHART BOX */
+        .chart-box {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
 
-</style>
+        .box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
 
+        .box-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .time-filters {
+            display: flex;
+            gap: 8px;
+        }
+
+        .time-btn {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #94a3b8;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .time-btn:hover, .time-btn.active {
+            background: #3b82f6;
+            color: #fff;
+            border-color: #3b82f6;
+        }
+
+        .chart-container {
+            height: 350px;
+        }
+
+        /* TABLE BOX */
+        .table-box {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            max-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-scroll {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 14px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        th:first-child { border-radius: 10px 0 0 0; }
+        th:last-child { border-radius: 0 10px 0 0; }
+
+        td {
+            padding: 14px 12px;
+            text-align: center;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+            font-size: 14px;
+        }
+
+        tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .inv-name {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .status-online {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-offline {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 1024px) {
+            .middle-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .header {
+                padding: 15px;
+            }
+
+            .header-title {
+                font-size: 20px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .card-value {
+                font-size: 26px;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 3px;
+        }
+    </style>
 </head>
 
 <body>
 
-<!-- HEADER -->
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-left">
+            <div class="solar-icon">☀️</div>
+            <div>
+                <div class="header-title">Paranjape Autocast 6MWp</div>
+                <div class="header-subtitle">Solar Power Plant Monitoring System</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span>System Online</span>
+            </div>
+            <div class="last-update">
+                Last Updated: <span id="lastUpdate">--</span>
+            </div>
+        </div>
+    </div>
 
-<div class="header">
+    <div class="container">
 
-Paranjape Autocast 6MWp
-</div>
+        <!-- TOP CARDS -->
+        <div class="top-cards">
 
-<div class="container">
-
-    <!-- TOP CARDS -->
-
-    <div class="top-cards">
-
-        <div class="card">
-
-            <div class="card-title">
-                Today Generation
+            <div class="card generation">
+                <div class="card-icon">⚡</div>
+                <div class="card-title">Today Generation</div>
+                <div class="card-value" id="todayGeneration">0 kWh</div>
+                <div class="card-change positive" id="genChange">↑ Loading...</div>
             </div>
 
-            <div class="card-value" id="todayGeneration">
-                0 kWh
+            <div class="card power">
+                <div class="card-icon">🔌</div>
+                <div class="card-title">Live Power</div>
+                <div class="card-value" id="livePower">0 kW</div>
+                <div class="card-change positive">Real-time Output</div>
+            </div>
+
+            <div class="card performance">
+                <div class="card-icon">📊</div>
+                <div class="card-title">Performance Ratio</div>
+                <div class="card-value" id="performance">0%</div>
+                <div class="card-change positive" id="perfStatus">Calculating...</div>
+            </div>
+
+            <div class="card capacity">
+                <div class="card-icon">🏭</div>
+                <div class="card-title">Plant Capacity</div>
+                <div class="card-value">6 MWp</div>
+                <div class="card-change positive">15 Inverters Active</div>
             </div>
 
         </div>
 
-        <div class="card">
+        <!-- GRAPH + TABLE -->
+        <div class="middle-section">
 
-            <div class="card-title">
-                Live Power
+            <!-- GRAPH -->
+            <div class="chart-box">
+                <div class="box-header">
+                    <div class="box-title">📈 Power Generation Trend</div>
+                    <div class="time-filters">
+                        <button class="time-btn active">Today</button>
+                        <button class="time-btn">Week</button>
+                        <button class="time-btn">Month</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="powerChart"></canvas>
+                </div>
             </div>
 
-            <div class="card-value" id="livePower">
-                0 kW
-            </div>
-
-        </div>
-
-        <div class="card">
-
-            <div class="card-title">
-                Performance
-            </div>
-
-            <div class="card-value" id="performance">
-                0 %
+            <!-- TABLE -->
+            <div class="table-box">
+                <div class="box-header">
+                    <div class="box-title">🔧 Inverter Status</div>
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Inverter</th>
+                                <th>Power (kW)</th>
+                                <th>Energy (kWh)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
             </div>
 
         </div>
 
     </div>
 
-    <!-- GRAPH + TABLE -->
+    <script>
 
-    <div class="middle-section">
+        const CSV_URL = "[script.googleusercontent.com](https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnS3pL3JyabVpduc3gZ1JwPUG5LZvw2g4khUwndVmpyBYH91CnS23Y1nVjFWtscBFc4yTfPLDNyzkLv_lkxfx9RkRIJoOETt4WOSwuQG_nSoTVcHymk3CVJm7yUPWTp76Zi2TN-ntmjrTfcmGkUwNTCFs4Md2xxWvua6yiIzsl2qJAlbzM6NQkim_SaMI6X4GDRlSp31g9zB4s1i-HTIyGX6173pj0sMVsDt62Uda5kQZ-hBw1f6_BsWseHiMWkFb2dP228UirJZ9IYTVawvunewO7Lgtw&lib=MCz00kSXntMNG2j8lNix72WIZvkK2cN4n)";
 
-        <!-- GRAPH -->
+        let powerChart;
 
-        <div class="chart-box">
+        async function loadData() {
+            try {
+                const response = await fetch(CSV_URL + "&t=" + new Date().getTime());
+                const csv = await response.text();
+                const rows = csv.trim().split("\n");
 
-            <canvas id="powerChart"></canvas>
+                let latestInvData = {};
+                let hourlyPlantPower = {};
 
-        </div>
-
-        <!-- TABLE -->
-
-        <div class="table-box">
-
-            <table>
-
-                <thead>
-
-                    <tr>
-
-                        <th>INV</th>
-                        <th>Power (kW)</th>
-                        <th>Generation (kWh)</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody id="tableBody"></tbody>
-
-            </table>
-
-        </div>
-
-    </div>
-
-</div>
-
-<script>
-
-// ===================================================
-// CSV URL
-// ===================================================
-
-const CSV_URL =
-"https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnS3pL3JyabVpduc3gZ1JwPUG5LZvw2g4khUwndVmpyBYH91CnS23Y1nVjFWtscBFc4yTfPLDNyzkLv_lkxfx9RkRIJoOETt4WOSwuQG_nSoTVcHymk3CVJm7yUPWTp76Zi2TN-ntmjrTfcmGkUwNTCFs4Md2xxWvua6yiIzsl2qJAlbzM6NQkim_SaMI6X4GDRlSp31g9zB4s1i-HTIyGX6173pj0sMVsDt62Uda5kQZ-hBw1f6_BsWseHiMWkFb2dP228UirJZ9IYTVawvunewO7Lgtw&lib=MCz00kSXntMNG2j8lNix72WIZvkK2cN4n";
-
-// ===================================================
-
-let powerChart;
-
-// ===================================================
-// LOAD DATA
-// ===================================================
-
-async function loadData(){
-
-try{
-
-    const response = await fetch(
-        CSV_URL + "&t=" + new Date().getTime()
-    );
-
-    const csv = await response.text();
-
-    const rows = csv.trim().split("\n");
-
-    // ===================================================
-    // VARIABLES
-    // ===================================================
-
-    let latestInvData = {};
-
-    let hourlyPlantPower = {};
-
-    // 6AM TO 7PM
-
-    for(let h=6; h<=19; h++){
-
-        let label =
-        (h<10?"0"+h:h)+":00";
-
-        hourlyPlantPower[label] = {};
-    }
-
-    // ===================================================
-    // CSV LOOP
-    // ===================================================
-
-    for(let i=1; i<rows.length; i++){
-
-        let cols = rows[i].split(",");
-
-        if(cols.length < 20) continue;
-
-        // ===================================================
-        // COLUMN MAPPING
-        // ===================================================
-
-        let datetime =
-        cols[0]?.trim();
-
-        let inverterId =
-        cols[1]?.trim();
-
-        // GENERATION COLUMN
-
-        let generation =
-        parseFloat(cols[3]) || 0;
-
-        // POWER COLUMN
-
-        let power =
-        parseFloat(cols[19]) || 0;
-
-        // ===================================================
-        // EXTRACT HOUR
-        // ===================================================
-
-        if(!datetime.includes(" ")) continue;
-
-        let parts =
-        datetime.split(" ");
-
-        if(parts.length < 2) continue;
-
-        let timePart =
-        parts[1];
-
-        let hour =
-        parseInt(timePart.split(":")[0]);
-
-        if(isNaN(hour)) continue;
-
-        // ===================================================
-        // LATEST DATA FOR TABLE
-        // ===================================================
-
-        latestInvData[inverterId] = {
-
-            power:power/100,
-            generation:generation
-
-        };
-
-        // ===================================================
-        // STORE HOUR WISE PLANT DATA
-        // ===================================================
-
-        if(hour >= 6 && hour <= 19){
-
-            let label =
-            (hour<10?"0"+hour:hour)+":00";
-
-            hourlyPlantPower[label][inverterId] =
-            power;
-
-        }
-
-    }
-
-    // ===================================================
-    // TOTALS
-    // ===================================================
-
-    let totalGeneration = 0;
-
-    let totalLivePower = 0;
-
-    Object.keys(latestInvData).forEach(inv=>{
-
-        totalGeneration +=
-        latestInvData[inv].generation;
-
-        totalLivePower +=
-        latestInvData[inv].power;
-
-    });
-
-    // ===================================================
-    // PERFORMANCE
-    // ===================================================
-
-    let performance =
-    ((totalGeneration /(totalGeneration*1.2) ) * 100);
-
-    // ===================================================
-    // UPDATE CARDS
-    // ===================================================
-
-    document.getElementById(
-    "todayGeneration").innerText =
-    totalGeneration.toFixed(2) + " kWh";
-
-    document.getElementById(
-    "livePower").innerText =
-    totalLivePower.toFixed(2) + " kW";
-
-    document.getElementById(
-    "performance").innerText =
-    performance.toFixed(2) + " %";
-
-    // ===================================================
-    // TABLE
-    // ===================================================
-
-    let html = "";
-
-    Object.keys(latestInvData)
-    .slice(0,15)
-    .forEach(inv=>{
-
-        html += `
-
-        <tr>
-
-            <td>
-                INV ${inv}
-            </td>
-
-            <td>
-                ${latestInvData[inv]
-                .power.toFixed(2)}
-            </td>
-
-            <td>
-                ${latestInvData[inv]
-                .generation.toFixed(2)}
-            </td>
-
-        </tr>
-
-        `;
-
-    });
-
-    document.getElementById(
-    "tableBody").innerHTML = html;
-
-    // ===================================================
-    // GRAPH DATA
-    // ===================================================
-
-    let labels = [];
-
-    let data = [];
-
-    for(let h=6; h<=19; h++){
-
-        let label =
-        (h<10?"0"+h:h)+":00";
-
-        labels.push(label);
-
-        let totalHourPower = 0;
-
-        Object.values(
-            hourlyPlantPower[label]
-        ).forEach(v=>{
-
-            totalHourPower += v;
-
-        });
-
-        data.push(totalHourPower);
-
-    }
-
-    // ===================================================
-    // DRAW CHART
-    // ===================================================
-
-    drawChart(labels,data);
-
-}
-catch(err){
-
-    console.log(err);
-
-}
-
-}
-
-// ===================================================
-// DRAW CHART
-// ===================================================
-
-function drawChart(labels,data){
-
-if(powerChart){
-
-    powerChart.destroy();
-
-}
-
-powerChart = new Chart(
-
-document.getElementById("powerChart"),
-
-{
-    type:'line',
-
-    data:{
-
-        labels:labels,
-
-        datasets:[{
-
-            label:'Plant Power Trend',
-
-            data:data,
-
-            borderColor:'#2196f3',
-
-            backgroundColor:
-            'rgba(33,150,243,0.20)',
-
-            fill:true,
-
-            tension:0.4,
-
-            borderWidth:3,
-
-            pointRadius:3
-
-        }]
-
-    },
-
-    options:{
-
-        responsive:true,
-
-        maintainAspectRatio:false,
-
-        interaction:{
-            intersect:false,
-            mode:'index'
-        },
-
-        plugins:{
-
-            legend:{
-                display:true
-            }
-
-        },
-
-        scales:{
-
-            x:{
-
-                grid:{
-                    display:false
+                for (let h = 6; h <= 19; h++) {
+                    let label = (h < 10 ? "0" + h : h) + ":00";
+                    hourlyPlantPower[label] = {};
                 }
 
-            },
+                for (let i = 1; i < rows.length; i++) {
+                    let cols = rows[i].split(",");
+                    if (cols.length < 20) continue;
 
-            y:{
+                    let datetime = cols[0]?.trim();
+                    let inverterId = cols[1]?.trim();
+                    let generation = parseFloat(cols[3]) || 0;
+                    let power = parseFloat(cols[19]) || 0;
 
-                beginAtZero:true,
+                    if (!datetime.includes(" ")) continue;
 
-                title:{
-                    display:true,
-                    text:'Power (kW)'
+                    let parts = datetime.split(" ");
+                    if (parts.length < 2) continue;
+
+                    let timePart = parts[1];
+                    let hour = parseInt(timePart.split(":")[0]);
+                    if (isNaN(hour)) continue;
+
+                    latestInvData[inverterId] = {
+                        power: power / 100,
+                        generation: generation
+                    };
+
+                    if (hour >= 6 && hour <= 19) {
+                        let label = (hour < 10 ? "0" + hour : hour) + ":00";
+                        hourlyPlantPower[label][inverterId] = power;
+                    }
                 }
 
-            }
+                let totalGeneration = 0;
+                let totalLivePower = 0;
 
+                Object.keys(latestInvData).forEach(inv => {
+                    totalGeneration += latestInvData[inv].generation;
+                    totalLivePower += latestInvData[inv].power;
+                });
+
+                let performance = ((totalGeneration / (totalGeneration * 1.2)) * 100);
+
+                // Update cards
+                document.getElementById("todayGeneration").innerText = totalGeneration.toFixed(2) + " kWh";
+                document.getElementById("livePower").innerText = totalLivePower.toFixed(2) + " kW";
+                document.getElementById("performance").innerText = performance.toFixed(1) + "%";
+
+                // Update status texts
+                document.getElementById("genChange").innerText = "↑ " + (totalGeneration / 1000).toFixed(2) + " MWh total";
+                document.getElementById("perfStatus").innerText = performance > 80 ? "✓ Excellent" : performance > 60 ? "◐ Good" : "⚠ Below Target";
+
+                // Update time
+                const now = new Date();
+                document.getElementById("lastUpdate").innerText = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+                // Table
+                let html = "";
+                Object.keys(latestInvData).slice(0, 15).forEach((inv, index) => {
+                    const isOnline = latestInvData[inv].power > 0;
+                    html += `
+                        <tr>
+                            <td class="inv-name">INV ${inv}</td>
+                            <td>${latestInvData[inv].power.toFixed(2)}</td>
+                            <td>${latestInvData[inv].generation.toFixed(2)}</td>
+                            <td><span class="${isOnline ? 'status-online' : 'status-offline'}">${isOnline ? 'Online' : 'Offline'}</span></td>
+                        </tr>
+                    `;
+                });
+                document.getElementById("tableBody").innerHTML = html;
+
+                // Chart data
+                let labels = [];
+                let data = [];
+
+                for (let h = 6; h <= 19; h++) {
+                    let label = (h < 10 ? "0" + h : h) + ":00";
+                    labels.push(label);
+
+                    let totalHourPower = 0;
+                    Object.values(hourlyPlantPower[label]).forEach(v => {
+                        totalHourPower += v;
+                    });
+                    data.push(totalHourPower / 100);
+                }
+
+                drawChart(labels, data);
+
+            } catch (err) {
+                console.log(err);
+            }
         }
 
-    }
+        function drawChart(labels, data) {
+            if (powerChart) {
+                powerChart.destroy();
+            }
 
-});
+            const ctx = document.getElementById("powerChart").getContext('2d');
 
-}
+            const gradient = ctx.createLinearGradient(0, 0, 0, 350);
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
+            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
 
-// ===================================================
-// INITIAL LOAD
-// ===================================================
+            powerChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Plant Power (kW)',
+                        data: data,
+                        borderColor: '#3b82f6',
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleColor: '#fff',
+                            bodyColor: '#94a3b8',
+                            borderColor: '#3b82f6',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Power: ' + context.parsed.y.toFixed(2) + ' kW';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(59, 130, 246, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(59, 130, 246, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Power (kW)',
+                                color: '#94a3b8'
+                            }
+                        }
+                    }
+                }
+            });
+        }
 
-loadData();
+        // Initial load
+        loadData();
 
-// ===================================================
-// REFRESH EVERY 1 MIN
-// ===================================================
+        // Refresh every 60 seconds (was 600ms — typo in original)
+        setInterval(loadData, 60000);
 
-setInterval(loadData,600);
-
-</script>
+    </script>
 
 </body>
-
 </html>
