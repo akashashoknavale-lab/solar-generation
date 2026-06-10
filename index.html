@@ -1,668 +1,514 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar SCADA Dashboard</title>
-    <script src="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/chart.js)"></script>
-    <link href="[fonts.googleapis.com](https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap)" rel="stylesheet">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Inverter Dashboard — BIL</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  :root {
+    --bg:        #0b0f1a;
+    --panel:     #111827;
+    --border:    #1e2d45;
+    --accent:    #00c2ff;
+    --green:     #22c55e;
+    --yellow:    #f59e0b;
+    --red:       #ef4444;
+    --text:      #e2e8f0;
+    --muted:     #64748b;
+    --card-h:    #0f172a;
+  }
 
-        body {
-            font-family: 'Inter', Arial, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            min-height: 100vh;
-            color: #e2e8f0;
-        }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* HEADER */
-        .header {
-            background: linear-gradient(90deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
-            padding: 20px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(59, 130, 246, 0.3);
-            flex-wrap: wrap;
-            gap: 15px;
-        }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
 
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #00c2ff33, #00c2ff);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo-sub  { font-size: 11px; color: var(--muted); }
 
-        .solar-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, #f59e0b, #fbbf24);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
-        }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  #last-update  { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
 
-        .header-title {
-            font-size: 26px;
-            font-weight: 700;
-            background: linear-gradient(90deg, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+  #refresh-btn {
+    background: var(--accent);
+    color: #000;
+    border: none; border-radius: 6px;
+    padding: 7px 16px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: opacity .2s;
+  }
+  #refresh-btn:hover { opacity: .85; }
 
-        .header-subtitle {
-            font-size: 13px;
-            color: #64748b;
-            margin-top: 2px;
-        }
+  .countdown {
+    font-size: 12px; color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
 
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
+  /* ── URL INPUT ── */
+  .url-bar {
+    display: flex; gap: 10px; align-items: center;
+    padding: 12px 28px;
+    background: #0d1423;
+    border-bottom: 1px solid var(--border);
+  }
+  .url-bar label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .url-bar input {
+    flex: 1;
+    background: var(--panel); border: 1px solid var(--border);
+    color: var(--text); border-radius: 6px;
+    padding: 7px 12px; font-size: 13px; font-family: 'JetBrains Mono', monospace;
+  }
+  .url-bar input:focus { outline: none; border-color: var(--accent); }
+  .url-bar button {
+    background: #1e3a5f; color: var(--accent);
+    border: 1px solid var(--accent); border-radius: 6px;
+    padding: 7px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background .2s;
+  }
+  .url-bar button:hover { background: #1e4a7f; }
 
-        .status-badge {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(34, 197, 94, 0.15);
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
+  /* ── MAIN ── */
+  main { padding: 24px 28px; max-width: 1600px; margin: 0 auto; }
 
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            background: #22c55e;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
+  /* ── STAT TAGS ── */
+  .tags {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .tag {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    position: relative; overflow: hidden;
+    transition: border-color .3s;
+  }
+  .tag::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--accent);
+  }
+  .tag.green::before  { background: var(--green); }
+  .tag.yellow::before { background: var(--yellow); }
+  .tag.red::before    { background: var(--red); }
+  .tag.blue::before   { background: var(--accent); }
+  .tag.purple::before { background: #a78bfa; }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            50% { opacity: 0.8; box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
-        }
+  .tag-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 6px; }
+  .tag-value { font-size: 26px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; }
+  .tag-unit  { font-size: 13px; color: var(--muted); margin-left: 4px; font-weight: 400; }
+  .tag-sub   { font-size: 11px; color: var(--muted); margin-top: 5px; }
 
-        .last-update {
-            font-size: 12px;
-            color: #64748b;
-        }
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-size: 13px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .8px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
 
-        /* CONTAINER */
-        .container {
-            padding: 25px;
-            max-width: 1600px;
-            margin: 0 auto;
-        }
+  /* ── TABLE ── */
+  .table-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { background: var(--card-h); }
+  th {
+    padding: 11px 14px;
+    text-align: left;
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .6px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #0d1623;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #0f1f35; }
 
-        /* TOP CARDS */
-        .top-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
-        }
+  .status-dot {
+    display: inline-block;
+    width: 8px; height: 8px; border-radius: 50%;
+    margin-right: 6px;
+  }
 
-        .card {
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            border-radius: 16px;
-            padding: 25px;
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
+  /* power cell color */
+  .power-high  { color: var(--green); }
+  .power-mid   { color: var(--yellow); }
+  .power-low   { color: var(--red); }
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
+  /* ── CHARTS ── */
+  .charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+  @media (max-width: 900px) { .charts { grid-template-columns: 1fr; } }
 
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            border-radius: 16px 16px 0 0;
-        }
+  .chart-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .chart-title {
+    font-size: 13px; font-weight: 600; margin-bottom: 14px;
+    color: var(--text);
+  }
+  .chart-card canvas { max-height: 220px; }
 
-        .card.generation::before { background: linear-gradient(90deg, #22c55e, #16a34a); }
-        .card.power::before { background: linear-gradient(90deg, #3b82f6, #2563eb); }
-        .card.performance::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
-        .card.capacity::before { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+  /* ── LOADING / ERROR ── */
+  #status-bar {
+    text-align: center; padding: 12px;
+    font-size: 13px; border-radius: 8px;
+    margin-bottom: 18px; display: none;
+  }
+  #status-bar.loading { background: #1e2d45; color: var(--accent); display: block; }
+  #status-bar.error   { background: #2d1111; color: var(--red);    display: block; }
 
-        .card-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            margin-bottom: 15px;
-        }
-
-        .card.generation .card-icon { background: rgba(34, 197, 94, 0.2); }
-        .card.power .card-icon { background: rgba(59, 130, 246, 0.2); }
-        .card.performance .card-icon { background: rgba(245, 158, 11, 0.2); }
-        .card.capacity .card-icon { background: rgba(139, 92, 246, 0.2); }
-
-        .card-title {
-            font-size: 14px;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-        }
-
-        .card-value {
-            font-size: 32px;
-            font-weight: 700;
-        }
-
-        .card.generation .card-value { color: #22c55e; }
-        .card.power .card-value { color: #3b82f6; }
-        .card.performance .card-value { color: #f59e0b; }
-        .card.capacity .card-value { color: #8b5cf6; }
-
-        .card-change {
-            font-size: 13px;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .card-change.positive { color: #22c55e; }
-        .card-change.negative { color: #ef4444; }
-
-        /* MIDDLE SECTION */
-        .middle-section {
-            display: grid;
-            grid-template-columns: 1.5fr 1fr;
-            gap: 20px;
-        }
-
-        /* CHART BOX */
-        .chart-box {
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            border-radius: 16px;
-            padding: 25px;
-            border: 1px solid rgba(59, 130, 246, 0.2);
-        }
-
-        .box-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .box-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #fff;
-        }
-
-        .time-filters {
-            display: flex;
-            gap: 8px;
-        }
-
-        .time-btn {
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            color: #94a3b8;
-            padding: 6px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.3s;
-        }
-
-        .time-btn:hover, .time-btn.active {
-            background: #3b82f6;
-            color: #fff;
-            border-color: #3b82f6;
-        }
-
-        .chart-container {
-            height: 350px;
-        }
-
-        /* TABLE BOX */
-        .table-box {
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            border-radius: 16px;
-            padding: 25px;
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            max-height: 500px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .table-scroll {
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        thead {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        th {
-            background: linear-gradient(90deg, #3b82f6, #2563eb);
-            color: white;
-            padding: 14px 12px;
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        th:first-child { border-radius: 10px 0 0 0; }
-        th:last-child { border-radius: 0 10px 0 0; }
-
-        td {
-            padding: 14px 12px;
-            text-align: center;
-            border-bottom: 1px solid rgba(59, 130, 246, 0.1);
-            font-size: 14px;
-        }
-
-        tr {
-            transition: background 0.2s;
-        }
-
-        tbody tr:hover {
-            background: rgba(59, 130, 246, 0.1);
-        }
-
-        .inv-name {
-            font-weight: 600;
-            color: #fff;
-        }
-
-        .status-online {
-            background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .status-offline {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        /* MOBILE RESPONSIVE */
-        @media (max-width: 1024px) {
-            .middle-section {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .header {
-                padding: 15px;
-            }
-
-            .header-title {
-                font-size: 20px;
-            }
-
-            .container {
-                padding: 15px;
-            }
-
-            .card-value {
-                font-size: 26px;
-            }
-        }
-
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #1e293b;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #3b82f6;
-            border-radius: 3px;
-        }
-    </style>
+  /* pulse dot */
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    display: inline-block;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: .4; transform: scale(.7); }
+  }
+</style>
 </head>
-
 <body>
 
-    <!-- HEADER -->
-    <div class="header">
-        <div class="header-left">
-            <div class="solar-icon">☀️</div>
-            <div>
-                <div class="header-title">Paranjape Autocast 6MWp</div>
-                <div class="header-subtitle">Solar Power Plant Monitoring System</div>
-            </div>
-        </div>
-        <div class="header-right">
-            <div class="status-badge">
-                <div class="status-dot"></div>
-                <span>System Online</span>
-            </div>
-            <div class="last-update">
-                Last Updated: <span id="lastUpdate">--</span>
-            </div>
-        </div>
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-text">Inverter Dashboard</div>
+      <div class="logo-sub">BIL — Real-time Monitoring</div>
     </div>
+  </div>
+  <div class="header-right">
+    <span class="live-dot"></span>
+    <span id="last-update">Not loaded yet</span>
+    <span class="countdown" id="countdown"></span>
+    <button id="refresh-btn" onclick="fetchData()">↻ Refresh</button>
+  </div>
+</header>
 
-    <div class="container">
+<!-- URL input bar -->
+<div class="url-bar">
+  <label>📡 Data URL (Google Script / API):</label>
+  <input type="text" id="data-url"
+    placeholder="https://script.googleusercontent.com/macros/echo?user_content_key=..."
+    value=""/>
+  <button onclick="fetchData()">Load Data</button>
+</div>
 
-        <!-- TOP CARDS -->
-        <div class="top-cards">
+<main>
+  <div id="status-bar">Loading data...</div>
 
-            <div class="card generation">
-                <div class="card-icon">⚡</div>
-                <div class="card-title">Today Generation</div>
-                <div class="card-value" id="todayGeneration">0 kWh</div>
-                <div class="card-change positive" id="genChange">↑ Loading...</div>
-            </div>
-
-            <div class="card power">
-                <div class="card-icon">🔌</div>
-                <div class="card-title">Live Power</div>
-                <div class="card-value" id="livePower">0 kW</div>
-                <div class="card-change positive">Real-time Output</div>
-            </div>
-
-            <div class="card performance">
-                <div class="card-icon">📊</div>
-                <div class="card-title">Performance Ratio</div>
-                <div class="card-value" id="performance">0%</div>
-                <div class="card-change positive" id="perfStatus">Calculating...</div>
-            </div>
-
-            <div class="card capacity">
-                <div class="card-icon">🏭</div>
-                <div class="card-title">Plant Capacity</div>
-                <div class="card-value">6 MWp</div>
-                <div class="card-change positive">15 Inverters Active</div>
-            </div>
-
-        </div>
-
-        <!-- GRAPH + TABLE -->
-        <div class="middle-section">
-
-            <!-- GRAPH -->
-            <div class="chart-box">
-                <div class="box-header">
-                    <div class="box-title">📈 Power Generation Trend</div>
-                    <div class="time-filters">
-                        <button class="time-btn active">Today</button>
-                        <button class="time-btn">Week</button>
-                        <button class="time-btn">Month</button>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="powerChart"></canvas>
-                </div>
-            </div>
-
-            <!-- TABLE -->
-            <div class="table-box">
-                <div class="box-header">
-                    <div class="box-title">🔧 Inverter Status</div>
-                </div>
-                <div class="table-scroll">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Inverter</th>
-                                <th>Power (kW)</th>
-                                <th>Energy (kWh)</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-
-        </div>
-
+  <!-- TAGS -->
+  <div class="section-title">Live Summary</div>
+  <div class="tags">
+    <div class="tag blue">
+      <div class="tag-label">Total Inverters</div>
+      <div class="tag-value" id="tag-total">—</div>
+      <div class="tag-sub">Connected devices</div>
     </div>
+    <div class="tag green">
+      <div class="tag-label">Total Power (W)</div>
+      <div class="tag-value" id="tag-power">—<span class="tag-unit">W</span></div>
+      <div class="tag-sub">Combined output</div>
+    </div>
+    <div class="tag blue">
+      <div class="tag-label">Today Generation</div>
+      <div class="tag-value" id="tag-dkwh">—<span class="tag-unit">kWh</span></div>
+      <div class="tag-sub">dkwh sum</div>
+    </div>
+    <div class="tag purple">
+      <div class="tag-label">Total Generation</div>
+      <div class="tag-value" id="tag-tkwh">—<span class="tag-unit">kWh</span></div>
+      <div class="tag-sub">tkwh sum</div>
+    </div>
+    <div class="tag yellow">
+      <div class="tag-label">Avg Temperature</div>
+      <div class="tag-value" id="tag-temp">—<span class="tag-unit">°C</span></div>
+      <div class="tag-sub">Across all inverters</div>
+    </div>
+  </div>
 
-    <script>
+  <!-- TABLE -->
+  <div class="section-title">Inverter-wise Data</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Device</th>
+          <th>Site</th>
+          <th>Status</th>
+          <th>Power (W)</th>
+          <th>Today kWh</th>
+          <th>Total kWh</th>
+          <th>Voltage (V)</th>
+          <th>Current (A)</th>
+          <th>Freq (Hz)</th>
+          <th>PF</th>
+          <th>Temp (°C)</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody id="inv-table">
+        <tr><td colspan="12" style="text-align:center;color:var(--muted);padding:30px">
+          Enter URL above and click Load Data
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
 
-        const CSV_URL = "[script.googleusercontent.com](https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnS3pL3JyabVpduc3gZ1JwPUG5LZvw2g4khUwndVmpyBYH91CnS23Y1nVjFWtscBFc4yTfPLDNyzkLv_lkxfx9RkRIJoOETt4WOSwuQG_nSoTVcHymk3CVJm7yUPWTp76Zi2TN-ntmjrTfcmGkUwNTCFs4Md2xxWvua6yiIzsl2qJAlbzM6NQkim_SaMI6X4GDRlSp31g9zB4s1i-HTIyGX6173pj0sMVsDt62Uda5kQZ-hBw1f6_BsWseHiMWkFb2dP228UirJZ9IYTVawvunewO7Lgtw&lib=MCz00kSXntMNG2j8lNix72WIZvkK2cN4n)";
+  <!-- CHARTS -->
+  <div class="section-title">Performance Charts</div>
+  <div class="charts">
+    <div class="chart-card">
+      <div class="chart-title">⚡ Power per Inverter (W)</div>
+      <canvas id="chart-power"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🌡️ Temperature per Inverter (°C)</div>
+      <canvas id="chart-temp"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">📅 Today's Generation per Inverter (kWh)</div>
+      <canvas id="chart-dkwh"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🏭 Total Generation per Inverter (kWh)</div>
+      <canvas id="chart-tkwh"></canvas>
+    </div>
+  </div>
+</main>
 
-        let powerChart;
+<script>
+// ── Chart instances ──
+let charts = {};
 
-        async function loadData() {
-            try {
-                const response = await fetch(CSV_URL + "&t=" + new Date().getTime());
-                const csv = await response.text();
-                const rows = csv.trim().split("\n");
+function initChart(id, label, color) {
+  const ctx = document.getElementById(id).getContext('2d');
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: [], datasets: [{ label, data: [], backgroundColor: color + 'cc', borderColor: color, borderWidth: 1, borderRadius: 5 }] },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#1e2d45' } },
+        y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#1e2d45' } }
+      }
+    }
+  });
+  return charts[id];
+}
 
-                let latestInvData = {};
-                let hourlyPlantPower = {};
+// init all charts on load
+initChart('chart-power', 'Power (W)',       '#00c2ff');
+initChart('chart-temp',  'Temp (°C)',        '#f59e0b');
+initChart('chart-dkwh',  'Today kWh',        '#22c55e');
+initChart('chart-tkwh',  'Total kWh',        '#a78bfa');
 
-                for (let h = 6; h <= 19; h++) {
-                    let label = (h < 10 ? "0" + h : h) + ":00";
-                    hourlyPlantPower[label] = {};
-                }
+// ── Power color ──
+function powerClass(w, maxW) {
+  const pct = maxW > 0 ? w / maxW : 0;
+  if (pct >= 0.6) return 'power-high';
+  if (pct >= 0.3) return 'power-mid';
+  return 'power-low';
+}
 
-                for (let i = 1; i < rows.length; i++) {
-                    let cols = rows[i].split(",");
-                    if (cols.length < 20) continue;
+// ── Parse CSV ──
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const vals = line.split(',');
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = vals[i] ? vals[i].trim() : '');
+    return obj;
+  });
+}
 
-                    let datetime = cols[0]?.trim();
-                    let inverterId = cols[1]?.trim();
-                    let generation = parseFloat(cols[3]) || 0;
-                    let power = parseFloat(cols[19]) || 0;
+// ── Render dashboard ──
+function render(rows) {
+  // Filter inverters only
+  const inv = rows.filter(r => r.DeviceType === 'Inverter');
+  if (!inv.length) {
+    showError('No Inverter rows found in data.');
+    return;
+  }
 
-                    if (!datetime.includes(" ")) continue;
+  // Latest row per device
+  const latestMap = {};
+  inv.forEach(r => {
+    const dev = r.DeviceName;
+    if (!latestMap[dev] || r.Timestamp > latestMap[dev].Timestamp)
+      latestMap[dev] = r;
+  });
+  const latest = Object.values(latestMap);
 
-                    let parts = datetime.split(" ");
-                    if (parts.length < 2) continue;
+  // ── TAGS ──
+  const totalPower = latest.reduce((s, r) => s + parseFloat(r.win || r.w || 0), 0);
+  const totalDkwh  = latest.reduce((s, r) => s + parseFloat(r.dkwh  || 0), 0);
+  const totalTkwh  = latest.reduce((s, r) => s + parseFloat(r.tkwh  || 0), 0);
+  const avgTemp    = latest.reduce((s, r) => s + parseFloat(r.temp  || 0), 0) / latest.length;
+  const maxPower   = Math.max(...latest.map(r => parseFloat(r.win || r.w || 0)));
 
-                    let timePart = parts[1];
-                    let hour = parseInt(timePart.split(":")[0]);
-                    if (isNaN(hour)) continue;
+  document.getElementById('tag-total').textContent = latest.length;
+  document.getElementById('tag-power').innerHTML = fmt(totalPower) + '<span class="tag-unit">W</span>';
+  document.getElementById('tag-dkwh').innerHTML  = fmt(totalDkwh / 1000, 1) + '<span class="tag-unit">kWh</span>';
+  document.getElementById('tag-tkwh').innerHTML  = fmt(totalTkwh / 1000, 1) + '<span class="tag-unit">kWh</span>';
+  document.getElementById('tag-temp').innerHTML  = avgTemp.toFixed(1) + '<span class="tag-unit">°C</span>';
 
-                    latestInvData[inverterId] = {
-                        power: power / 100,
-                        generation: generation
-                    };
+  // ── TABLE ──
+  const tbody = document.getElementById('inv-table');
+  tbody.innerHTML = latest.sort((a,b) => a.DeviceName.localeCompare(b.DeviceName)).map(r => {
+    const w    = parseFloat(r.win || r.w || 0);
+    const pc   = powerClass(w, maxPower);
+    const stat = parseInt(r.Status) === 1 ? 'Online' : 'Offline';
+    const dotC = parseInt(r.Status) === 1 ? 'var(--green)' : 'var(--red)';
+    return `<tr>
+      <td><b>${r.DeviceName}</b></td>
+      <td>${r.sitename}</td>
+      <td><span class="status-dot" style="background:${dotC}"></span>${stat}</td>
+      <td class="${pc}">${fmt(w)}</td>
+      <td>${fmt(parseFloat(r.dkwh||0)/1000,2)}</td>
+      <td>${fmt(parseFloat(r.tkwh||0)/1000,2)}</td>
+      <td>${fmt(parseFloat(r.v||0),1)}</td>
+      <td>${fmt(parseFloat(r.i||0),2)}</td>
+      <td>${parseFloat(r.f||0).toFixed(1)}</td>
+      <td>${parseFloat(r.pf||0).toFixed(3)}</td>
+      <td class="${parseFloat(r.temp||0)>70?'power-low':parseFloat(r.temp||0)>60?'power-mid':'power-high'}">${parseFloat(r.temp||0).toFixed(1)}</td>
+      <td>${r.Timestamp||''}</td>
+    </tr>`;
+  }).join('');
 
-                    if (hour >= 6 && hour <= 19) {
-                        let label = (hour < 10 ? "0" + hour : hour) + ":00";
-                        hourlyPlantPower[label][inverterId] = power;
-                    }
-                }
+  // ── CHARTS ──
+  const sorted = latest.sort((a,b) => a.DeviceName.localeCompare(b.DeviceName));
+  const labels = sorted.map(r => r.DeviceName);
 
-                let totalGeneration = 0;
-                let totalLivePower = 0;
+  updateChart('chart-power', labels, sorted.map(r => parseFloat(r.win||r.w||0)),        '#00c2ff');
+  updateChart('chart-temp',  labels, sorted.map(r => parseFloat(r.temp||0)),             '#f59e0b');
+  updateChart('chart-dkwh',  labels, sorted.map(r => parseFloat(r.dkwh||0)/1000),        '#22c55e');
+  updateChart('chart-tkwh',  labels, sorted.map(r => parseFloat(r.tkwh||0)/1000),        '#a78bfa');
 
-                Object.keys(latestInvData).forEach(inv => {
-                    totalGeneration += latestInvData[inv].generation;
-                    totalLivePower += latestInvData[inv].power;
-                });
+  // update last-update
+  document.getElementById('last-update').textContent =
+    '↻ Updated: ' + new Date().toLocaleTimeString('en-IN');
+}
 
-                let performance = ((totalGeneration / (totalGeneration * 1.2)) * 100);
+function updateChart(id, labels, data, baseColor) {
+  const c = charts[id];
+  // color each bar green/yellow/red based on value vs max
+  const maxVal = Math.max(...data);
+  const colors = data.map(v => {
+    const pct = maxVal > 0 ? v / maxVal : 0;
+    if (pct >= 0.6) return '#22c55ecc';
+    if (pct >= 0.3) return '#f59e0bcc';
+    return '#ef4444cc';
+  });
+  c.data.labels = labels;
+  c.data.datasets[0].data = data;
+  c.data.datasets[0].backgroundColor = colors;
+  c.data.datasets[0].borderColor = colors.map(c => c.replace('cc',''));
+  c.update();
+}
 
-                // Update cards
-                document.getElementById("todayGeneration").innerText = totalGeneration.toFixed(2) + " kWh";
-                document.getElementById("livePower").innerText = totalLivePower.toFixed(2) + " kW";
-                document.getElementById("performance").innerText = performance.toFixed(1) + "%";
+function fmt(n, dec=0) {
+  if (isNaN(n)) return '—';
+  return n.toLocaleString('en-IN', { maximumFractionDigits: dec });
+}
 
-                // Update status texts
-                document.getElementById("genChange").innerText = "↑ " + (totalGeneration / 1000).toFixed(2) + " MWh total";
-                document.getElementById("perfStatus").innerText = performance > 80 ? "✓ Excellent" : performance > 60 ? "◐ Good" : "⚠ Below Target";
+// ── Status helpers ──
+function showLoading(msg) {
+  const s = document.getElementById('status-bar');
+  s.className = 'loading'; s.textContent = msg; s.style.display = 'block';
+}
+function showError(msg) {
+  const s = document.getElementById('status-bar');
+  s.className = 'error'; s.textContent = '⚠ ' + msg; s.style.display = 'block';
+}
+function hideStatus() {
+  document.getElementById('status-bar').style.display = 'none';
+}
 
-                // Update time
-                const now = new Date();
-                document.getElementById("lastUpdate").innerText = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+// ── FETCH DATA ──
+async function fetchData() {
+  const url = document.getElementById('data-url').value.trim();
+  if (!url) { showError('Please enter your Google Script URL above.'); return; }
 
-                // Table
-                let html = "";
-                Object.keys(latestInvData).slice(0, 15).forEach((inv, index) => {
-                    const isOnline = latestInvData[inv].power > 0;
-                    html += `
-                        <tr>
-                            <td class="inv-name">INV ${inv}</td>
-                            <td>${latestInvData[inv].power.toFixed(2)}</td>
-                            <td>${latestInvData[inv].generation.toFixed(2)}</td>
-                            <td><span class="${isOnline ? 'status-online' : 'status-offline'}">${isOnline ? 'Online' : 'Offline'}</span></td>
-                        </tr>
-                    `;
-                });
-                document.getElementById("tableBody").innerHTML = html;
+  showLoading('⏳ Fetching data...');
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    hideStatus();
+    const rows = parseCSV(text);
+    if (!rows.length) throw new Error('No data rows found');
+    render(rows);
+  } catch (e) {
+    showError('Error: ' + e.message + ' — Check URL or enable CORS in Google Script.');
+  }
+}
 
-                // Chart data
-                let labels = [];
-                let data = [];
-
-                for (let h = 6; h <= 19; h++) {
-                    let label = (h < 10 ? "0" + h : h) + ":00";
-                    labels.push(label);
-
-                    let totalHourPower = 0;
-                    Object.values(hourlyPlantPower[label]).forEach(v => {
-                        totalHourPower += v;
-                    });
-                    data.push(totalHourPower / 100);
-                }
-
-                drawChart(labels, data);
-
-            } catch (err) {
-                console.log(err);
-            }
-        }
-
-        function drawChart(labels, data) {
-            if (powerChart) {
-                powerChart.destroy();
-            }
-
-            const ctx = document.getElementById("powerChart").getContext('2d');
-
-            const gradient = ctx.createLinearGradient(0, 0, 0, 350);
-            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
-            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-
-            powerChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Plant Power (kW)',
-                        data: data,
-                        borderColor: '#3b82f6',
-                        backgroundColor: gradient,
-                        fill: true,
-                        tension: 0.4,
-                        borderWidth: 3,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#3b82f6',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointHoverRadius: 7
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: '#1e293b',
-                            titleColor: '#fff',
-                            bodyColor: '#94a3b8',
-                            borderColor: '#3b82f6',
-                            borderWidth: 1,
-                            padding: 12,
-                            displayColors: false,
-                            callbacks: {
-                                label: function(context) {
-                                    return 'Power: ' + context.parsed.y.toFixed(2) + ' kW';
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: 'rgba(59, 130, 246, 0.1)'
-                            },
-                            ticks: {
-                                color: '#94a3b8'
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(59, 130, 246, 0.1)'
-                            },
-                            ticks: {
-                                color: '#94a3b8'
-                            },
-                            title: {
-                                display: true,
-                                text: 'Power (kW)',
-                                color: '#94a3b8'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Initial load
-        loadData();
-
-        // Refresh every 60 seconds (was 600ms — typo in original)
-        setInterval(loadData, 60000);
-
-    </script>
-
+// ── AUTO REFRESH every 60 seconds ──
+let secondsLeft = 60;
+setInterval(() => {
+  secondsLeft--;
+  document.getElementById('countdown').textContent = `(auto-refresh in ${secondsLeft}s)`;
+  if (secondsLeft <= 0) {
+    secondsLeft = 60;
+    fetchData();
+  }
+}, 1000);
+</script>
 </body>
 </html>
