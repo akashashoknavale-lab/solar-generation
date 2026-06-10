@@ -328,9 +328,9 @@ function render(rows) {
   const maxPower   = Math.max(...latest.map(r => parseFloat(r.w || 0)));
 
   document.getElementById('tag-total').textContent = latest.length;
-  document.getElementById('tag-power').innerHTML = fmt(totalPower) + '<span class="tag-unit">W</span>';
+  document.getElementById('tag-power').innerHTML = fmt(totalPower) + '<span class="tag-unit">KW</span>';
   document.getElementById('tag-dkwh').innerHTML  = fmt(totalDkwh, 1) + '<span class="tag-unit">kWh</span>';
-  document.getElementById('tag-tkwh').innerHTML  = fmt(totalTkwh / 1000, 1) + '<span class="tag-unit">kWh</span>';
+  document.getElementById('tag-tkwh').innerHTML  = fmt(totalTkwh / 1000, 1) + '<span class="tag-unit">MWh</span>';
   document.getElementById('tag-temp').innerHTML  = avgTemp.toFixed(1) + '<span class="tag-unit">C</span>';
 
   const tbody = document.getElementById('inv-table');
