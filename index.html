@@ -396,7 +396,7 @@ function render(rows) {
   const latest = Object.values(latestMap);
 
   // ── TAGS ──
-  const totalPower = latest.reduce((s, r) => s + parseFloat(r.win || r.w || 0), 0);
+  const totalPower = latest.reduce((s, r) => s + parseFloat(r.w || 0), 0);
   const totalDkwh  = latest.reduce((s, r) => s + parseFloat(r.dkwh  || 0), 0);
   const totalTkwh  = latest.reduce((s, r) => s + parseFloat(r.tkwh  || 0), 0);
   const avgTemp    = latest.reduce((s, r) => s + parseFloat(r.temp  || 0), 0) / latest.length;
@@ -411,7 +411,7 @@ function render(rows) {
   // ── TABLE ──
   const tbody = document.getElementById('inv-table');
   tbody.innerHTML = latest.sort((a,b) => a.DeviceName.localeCompare(b.DeviceName)).map(r => {
-    const w    = parseFloat(r.win || r.w || 0);
+    const w    = parseFloat(r.w || 0);
     const pc   = powerClass(w, maxPower);
     const stat = parseInt(r.Status) === 1 ? 'Online' : 'Offline';
     const dotC = parseInt(r.Status) === 1 ? 'var(--green)' : 'var(--red)';
@@ -435,7 +435,7 @@ function render(rows) {
   const sorted = latest.sort((a,b) => a.DeviceName.localeCompare(b.DeviceName));
   const labels = sorted.map(r => r.DeviceName);
 
-  updateChart('chart-power', labels, sorted.map(r => parseFloat(r.win||r.w||0)),        '#00c2ff');
+  updateChart('chart-power', labels, sorted.map(r => parseFloat(r.w||0)),        '#00c2ff');
   updateChart('chart-temp',  labels, sorted.map(r => parseFloat(r.temp||0)),             '#f59e0b');
   updateChart('chart-dkwh',  labels, sorted.map(r => parseFloat(r.dkwh||0)/1000),        '#22c55e');
   updateChart('chart-tkwh',  labels, sorted.map(r => parseFloat(r.tkwh||0)/1000),        '#a78bfa');
