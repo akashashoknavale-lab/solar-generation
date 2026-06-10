@@ -339,9 +339,6 @@ function render(rows) {
     const pc   = powerClass(w, maxPower);
     const stat = parseInt(r.Status) === 0 ? 'Online' : 'Offline';
     const dotC = parseInt(r.Status) === 0 ? 'var(--green)' : 'var(--red)';
-	const w = parseFloat(r.w || 0);
-	const v = parseFloat(r.v || 0);
-	const current = v > 0 ? (w / v) : 0;
     return '<tr>' +
       '<td><b>' + r.DeviceName + '</b></td>' +
       '<td>' + r.sitename + '</td>' +
@@ -350,8 +347,7 @@ function render(rows) {
       '<td>' + fmt(parseFloat(r.dkwh||0), 2) + '</td>' +
       '<td>' + fmt(parseFloat(r.tkwh||0)/1000, 2) + '</td>' +
       '<td>' + fmt(parseFloat(r.v||0), 1) + '</td>' +
-      //'<td>' + fmt(parseFloat(r.i||0), 2) + '</td>' +//
-	  '<td>' + current.toFixed(2) + '</td>'
+      '<td>' + fmt(parseFloat(r.i||0), 2) + '</td>' +
       '<td>' + parseFloat(r.f||0).toFixed(1) + '</td>' +
       '<td>' + parseFloat(r.pf||0).toFixed(3) + '</td>' +
       '<td class="' + (parseFloat(r.temp||0)>70?'power-low':parseFloat(r.temp||0)>60?'power-mid':'power-high') + '">' + parseFloat(r.temp||0).toFixed(1) + '</td>' +
@@ -406,7 +402,7 @@ function hideStatus() {
 
 // WhatsApp Alert
 async function sendWhatsApp(message) {
-  if (!WA_PHONE || !WA_APIKEY || WA_PHONE === "918796223553") return;
+  if (!WA_PHONE || !WA_APIKEY || WA_PHONE === "91XXXXXXXXXX") return;
   const url = 'https://api.callmebot.com/whatsapp.php?phone=' + WA_PHONE +
               '&text=' + encodeURIComponent(message) + '&apikey=' + WA_APIKEY;
   try { await fetch(url, { mode: 'no-cors' }); } catch(e) {}
