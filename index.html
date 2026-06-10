@@ -30,7 +30,6 @@
     min-height: 100vh;
   }
 
-  /* ── HEADER ── */
   header {
     display: flex;
     align-items: center;
@@ -50,25 +49,16 @@
   }
   .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
   .logo-sub  { font-size: 11px; color: var(--muted); }
-
   .header-right { display: flex; align-items: center; gap: 16px; }
   #last-update  { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
-
   #refresh-btn {
-    background: var(--accent);
-    color: #000;
+    background: var(--accent); color: #000;
     border: none; border-radius: 6px;
     padding: 7px 16px; font-size: 13px; font-weight: 600;
     cursor: pointer; transition: opacity .2s;
   }
   #refresh-btn:hover { opacity: .85; }
-
-  .countdown {
-    font-size: 12px; color: var(--muted);
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  /* ── URL INPUT ── */
+  .countdown { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
   .url-bar {
     display: flex; gap: 10px; align-items: center;
     padding: 12px 28px;
@@ -77,8 +67,7 @@
   }
   .url-bar label { font-size: 12px; color: var(--muted); white-space: nowrap; }
   .url-bar input {
-    flex: 1;
-    background: var(--panel); border: 1px solid var(--border);
+    flex: 1; background: var(--panel); border: 1px solid var(--border);
     color: var(--text); border-radius: 6px;
     padding: 7px 12px; font-size: 13px; font-family: 'JetBrains Mono', monospace;
   }
@@ -87,144 +76,82 @@
     background: #1e3a5f; color: var(--accent);
     border: 1px solid var(--accent); border-radius: 6px;
     padding: 7px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
-    transition: background .2s;
   }
-  .url-bar button:hover { background: #1e4a7f; }
-
-  /* ── MAIN ── */
   main { padding: 24px 28px; max-width: 1600px; margin: 0 auto; }
-
-  /* ── STAT TAGS ── */
   .tags {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 14px;
-    margin-bottom: 24px;
+    gap: 14px; margin-bottom: 24px;
   }
   .tag {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px 20px;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 20px;
     position: relative; overflow: hidden;
-    transition: border-color .3s;
   }
   .tag::before {
-    content: '';
-    position: absolute; top: 0; left: 0;
-    width: 3px; height: 100%;
-    background: var(--accent);
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%; background: var(--accent);
   }
   .tag.green::before  { background: var(--green); }
   .tag.yellow::before { background: var(--yellow); }
   .tag.red::before    { background: var(--red); }
   .tag.blue::before   { background: var(--accent); }
   .tag.purple::before { background: #a78bfa; }
-
   .tag-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 6px; }
   .tag-value { font-size: 26px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; }
   .tag-unit  { font-size: 13px; color: var(--muted); margin-left: 4px; font-weight: 400; }
   .tag-sub   { font-size: 11px; color: var(--muted); margin-top: 5px; }
-
-  /* ── SECTION TITLE ── */
   .section-title {
     font-size: 13px; font-weight: 600;
     text-transform: uppercase; letter-spacing: .8px;
-    color: var(--muted);
-    margin-bottom: 14px;
+    color: var(--muted); margin-bottom: 14px;
     display: flex; align-items: center; gap: 8px;
   }
-  .section-title::after {
-    content: ''; flex: 1; height: 1px; background: var(--border);
-  }
-
-  /* ── TABLE ── */
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
   .table-wrap {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 28px;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden; margin-bottom: 28px;
   }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   thead { background: var(--card-h); }
   th {
-    padding: 11px 14px;
-    text-align: left;
+    padding: 11px 14px; text-align: left;
     font-size: 11px; font-weight: 600;
     text-transform: uppercase; letter-spacing: .6px;
-    color: var(--muted);
-    border-bottom: 1px solid var(--border);
+    color: var(--muted); border-bottom: 1px solid var(--border);
   }
   td {
-    padding: 10px 14px;
-    border-bottom: 1px solid #0d1623;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
+    padding: 10px 14px; border-bottom: 1px solid #0d1623;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
   }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #0f1f35; }
-
-  .status-dot {
-    display: inline-block;
-    width: 8px; height: 8px; border-radius: 50%;
-    margin-right: 6px;
-  }
-
-  /* power cell color */
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
   .power-high  { color: var(--green); }
   .power-mid   { color: var(--yellow); }
   .power-low   { color: var(--red); }
-
-  /* ── CHARTS ── */
-  .charts {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
-    margin-bottom: 28px;
-  }
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 28px; }
   @media (max-width: 900px) { .charts { grid-template-columns: 1fr; } }
-
-  .chart-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 18px 20px;
-  }
-  .chart-title {
-    font-size: 13px; font-weight: 600; margin-bottom: 14px;
-    color: var(--text);
-  }
+  .chart-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+  .chart-title { font-size: 13px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
   .chart-card canvas { max-height: 220px; }
-
-  /* ── LOADING / ERROR ── */
-  #status-bar {
-    text-align: center; padding: 12px;
-    font-size: 13px; border-radius: 8px;
-    margin-bottom: 18px; display: none;
-  }
+  #status-bar { text-align: center; padding: 12px; font-size: 13px; border-radius: 8px; margin-bottom: 18px; display: none; }
   #status-bar.loading { background: #1e2d45; color: var(--accent); display: block; }
-  #status-bar.error   { background: #2d1111; color: var(--red);    display: block; }
-
-  /* pulse dot */
-  .live-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--green);
-    display: inline-block;
-    animation: pulse 1.5s infinite;
-  }
-  @keyframes pulse {
-    0%,100% { opacity: 1; transform: scale(1); }
-    50%      { opacity: .4; transform: scale(.7); }
-  }
+  #status-bar.error   { background: #2d1111; color: var(--red); display: block; }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(.7); } }
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">
-    <div class="logo-icon">⚡</div>
+    <div class="logo-icon">&#9889;</div>
     <div>
+      <!-- ============================================================
+           CHANGE 1: Dashboard Title ani Company Name
+           'Inverter Dashboard' ani 'BIL' tya jaghi tumcha naam taka
+           ============================================================ -->
       <div class="logo-text">Inverter Dashboard</div>
       <div class="logo-sub">BIL — Real-time Monitoring</div>
     </div>
@@ -233,105 +160,114 @@
     <span class="live-dot"></span>
     <span id="last-update">Not loaded yet</span>
     <span class="countdown" id="countdown"></span>
-    <button id="refresh-btn" onclick="fetchData()">↻ Refresh</button>
+    <button id="refresh-btn" onclick="fetchData()">&#8635; Refresh</button>
   </div>
 </header>
 
-<!-- URL input bar -->
-<div class="url-bar">
-  <label>📡 Data URL (Google Script / API):</label>
-  <input type="text" id="data-url"
-    placeholder="https://script.googleusercontent.com/macros/echo?user_content_key=..."
-    value=""/>
+<!-- ============================================================
+     CHANGE 2: URL Bar - hi puri bar REMOVE karu shakta
+     DATA_URL khali hardcode kela ahe, tar hi bar lagat nahi
+     Hide karayla: style="display:none" add kara
+     ============================================================ -->
+<div class="url-bar" style="display:none;">
+  <label>Data URL:</label>
+  <input type="text" id="data-url" placeholder="URL..." value=""/>
   <button onclick="fetchData()">Load Data</button>
 </div>
 
 <main>
   <div id="status-bar">Loading data...</div>
 
-  <!-- TAGS -->
   <div class="section-title">Live Summary</div>
   <div class="tags">
     <div class="tag blue">
       <div class="tag-label">Total Inverters</div>
-      <div class="tag-value" id="tag-total">—</div>
+      <div class="tag-value" id="tag-total">&#8212;</div>
       <div class="tag-sub">Connected devices</div>
     </div>
     <div class="tag green">
       <div class="tag-label">Total Power (W)</div>
-      <div class="tag-value" id="tag-power">—<span class="tag-unit">W</span></div>
+      <div class="tag-value" id="tag-power">&#8212;<span class="tag-unit">W</span></div>
       <div class="tag-sub">Combined output</div>
     </div>
     <div class="tag blue">
       <div class="tag-label">Today Generation</div>
-      <div class="tag-value" id="tag-dkwh">—<span class="tag-unit">kWh</span></div>
+      <div class="tag-value" id="tag-dkwh">&#8212;<span class="tag-unit">kWh</span></div>
       <div class="tag-sub">dkwh sum</div>
     </div>
     <div class="tag purple">
       <div class="tag-label">Total Generation</div>
-      <div class="tag-value" id="tag-tkwh">—<span class="tag-unit">kWh</span></div>
+      <div class="tag-value" id="tag-tkwh">&#8212;<span class="tag-unit">kWh</span></div>
       <div class="tag-sub">tkwh sum</div>
     </div>
     <div class="tag yellow">
       <div class="tag-label">Avg Temperature</div>
-      <div class="tag-value" id="tag-temp">—<span class="tag-unit">°C</span></div>
+      <div class="tag-value" id="tag-temp">&#8212;<span class="tag-unit">&#176;C</span></div>
       <div class="tag-sub">Across all inverters</div>
     </div>
   </div>
 
-  <!-- TABLE -->
   <div class="section-title">Inverter-wise Data</div>
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
-          <th>Device</th>
-          <th>Site</th>
-          <th>Status</th>
-          <th>Power (kW)</th>
-          <th>Today kWh</th>
-          <th>Total kWh</th>
-          <th>Voltage (V)</th>
-          <th>Current (A)</th>
-          <th>Freq (Hz)</th>
-          <th>PF</th>
-          <th>Temp (°C)</th>
-          <th>Timestamp</th>
+          <th>Device</th><th>Site</th><th>Status</th>
+          <th>Power (kW)</th><th>Today kWh</th><th>Total kWh</th>
+          <th>Voltage (V)</th><th>Current (A)</th>
+          <th>Freq (Hz)</th><th>PF</th><th>Temp (&#176;C)</th><th>Timestamp</th>
         </tr>
       </thead>
       <tbody id="inv-table">
-        <tr><td colspan="12" style="text-align:center;color:var(--muted);padding:30px">
-          Enter URL above and click Load Data
-        </td></tr>
+        <tr><td colspan="12" style="text-align:center;color:var(--muted);padding:30px">Loading...</td></tr>
       </tbody>
     </table>
   </div>
 
-  <!-- CHARTS -->
   <div class="section-title">Performance Charts</div>
   <div class="charts">
-    <div class="chart-card">
-      <div class="chart-title">⚡ Power per Inverter (W)</div>
-      <canvas id="chart-power"></canvas>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">🌡️ Temperature per Inverter (°C)</div>
-      <canvas id="chart-temp"></canvas>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">📅 Today's Generation per Inverter (kWh)</div>
-      <canvas id="chart-dkwh"></canvas>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">🏭 Total Generation per Inverter (kWh)</div>
-      <canvas id="chart-tkwh"></canvas>
-    </div>
+    <div class="chart-card"><div class="chart-title">&#9889; Power per Inverter (W)</div><canvas id="chart-power"></canvas></div>
+    <div class="chart-card"><div class="chart-title">&#127777;&#65039; Temperature per Inverter (&#176;C)</div><canvas id="chart-temp"></canvas></div>
+    <div class="chart-card"><div class="chart-title">&#128197; Today's Generation per Inverter (kWh)</div><canvas id="chart-dkwh"></canvas></div>
+    <div class="chart-card"><div class="chart-title">&#127981; Total Generation per Inverter (kWh)</div><canvas id="chart-tkwh"></canvas></div>
   </div>
 </main>
 
 <script>
-// ── Chart instances ──
+
+// ============================================================
+// CHANGE 3: TUMCHI DATA URL ITHE TAKA
+// Google Script chi puri URL khali paste kara
+// ============================================================
+const DATA_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnQfIaxdNlGH82JzIrG65DdVcKoNHq_VUoGuiWS-BKvo9LmIxJwRDcJOrPsRISjnfWu-C1avirojWrtBEZQ_znz5ZU_YJbr9rKG0CyJ30zkeXaAxDcrmTtAxwksJ_zCPitkM6xK0OGUrIHUBE6SZbAZViweLeyiTrh3hTNDOgIbxpfqYD3oeuwdU21Hqi3wUVKMKT9E5SjFVXEINQ4Zhy_mQpGtFcwotzuob_Z0IVkutF5gEFTzrRtWf_9FI9GRGpyAGOTuSWvOXhYLRKhOlFSN7bRAUPg&lib=Mk9HQ0r3qGd7INt1EjCdzPJHe6fVZ7h-Z";
+// Example:
+// const DATA_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=ABC123...";
+
+
+// ============================================================
+// CHANGE 4: WhatsApp Alert Settings
+// Phone number ani API Key ithe hardcode kara
+// Phone: country code sah, e.g. India = 91XXXXXXXXXX
+// API Key: CallMeBot ne dilela key
+// Threshold: ya Watts khali gele ki alert pathvaycha
+// ============================================================
+const WA_PHONE     = "91XXXXXXXXXX";   // <-- tumcha WhatsApp number
+const WA_APIKEY    = "XXXXXXX";        // <-- CallMeBot API Key
+const WA_THRESHOLD = 100;              // <-- ya Watts khali gele ki alert (0 = power band jhali)
+
+
+// ============================================================
+// CHANGE 5: Auto Refresh Interval
+// Kitya seconds la data refresh vhava?
+// Default: 60 seconds (1 minute)
+// ============================================================
+const REFRESH_SECONDS = 60;
+
+
+// -- KHALI KAY PAN BADLAYCHI GARAJ NAHI --
+
 let charts = {};
+const alertedDevices = {};
 
 function initChart(id, label, color) {
   const ctx = document.getElementById(id).getContext('2d');
@@ -348,16 +284,13 @@ function initChart(id, label, color) {
       }
     }
   });
-  return charts[id];
 }
 
-// init all charts on load
-initChart('chart-power', 'Power (W)',       '#00c2ff');
-initChart('chart-temp',  'Temp (°C)',        '#f59e0b');
-initChart('chart-dkwh',  'Today kWh',        '#22c55e');
-initChart('chart-tkwh',  'Total kWh',        '#a78bfa');
+initChart('chart-power', 'Power (W)',  '#00c2ff');
+initChart('chart-temp',  'Temp (C)',   '#f59e0b');
+initChart('chart-dkwh',  'Today kWh', '#22c55e');
+initChart('chart-tkwh',  'Total kWh', '#a78bfa');
 
-// ── Power color ──
 function powerClass(w, maxW) {
   const pct = maxW > 0 ? w / maxW : 0;
   if (pct >= 0.6) return 'power-high';
@@ -365,7 +298,6 @@ function powerClass(w, maxW) {
   return 'power-low';
 }
 
-// ── Parse CSV ──
 function parseCSV(text) {
   const lines = text.trim().split('\n');
   const headers = lines[0].split(',').map(h => h.trim());
@@ -377,16 +309,10 @@ function parseCSV(text) {
   });
 }
 
-// ── Render dashboard ──
 function render(rows) {
-  // Filter inverters only
   const inv = rows.filter(r => r.DeviceType === 'Inverter');
-  if (!inv.length) {
-    showError('No Inverter rows found in data.');
-    return;
-  }
+  if (!inv.length) { showError('No Inverter rows found.'); return; }
 
-  // Latest row per device
   const latestMap = {};
   inv.forEach(r => {
     const dev = r.DeviceName;
@@ -395,59 +321,54 @@ function render(rows) {
   });
   const latest = Object.values(latestMap);
 
-  // ── TAGS ──
   const totalPower = latest.reduce((s, r) => s + parseFloat(r.w || 0), 0);
-  const totalDkwh  = latest.reduce((s, r) => s + parseFloat(r.dkwh  || 0), 0);
-  const totalTkwh  = latest.reduce((s, r) => s + parseFloat(r.tkwh  || 0), 0);
-  const avgTemp    = latest.reduce((s, r) => s + parseFloat(r.temp  || 0), 0) / latest.length;
-  const maxPower   = Math.max(...latest.map(r => parseFloat(r.win || r.w || 0)));
+  const totalDkwh  = latest.reduce((s, r) => s + parseFloat(r.dkwh || 0), 0);
+  const totalTkwh  = latest.reduce((s, r) => s + parseFloat(r.tkwh || 0), 0);
+  const avgTemp    = latest.reduce((s, r) => s + parseFloat(r.temp || 0), 0) / latest.length;
+  const maxPower   = Math.max(...latest.map(r => parseFloat(r.w || 0)));
 
   document.getElementById('tag-total').textContent = latest.length;
   document.getElementById('tag-power').innerHTML = fmt(totalPower) + '<span class="tag-unit">W</span>';
-  document.getElementById('tag-dkwh').innerHTML  = fmt(totalDkwh / 1000, 1) + '<span class="tag-unit">kWh</span>';
+  document.getElementById('tag-dkwh').innerHTML  = fmt(totalDkwh, 1) + '<span class="tag-unit">kWh</span>';
   document.getElementById('tag-tkwh').innerHTML  = fmt(totalTkwh / 1000, 1) + '<span class="tag-unit">kWh</span>';
-  document.getElementById('tag-temp').innerHTML  = avgTemp.toFixed(1) + '<span class="tag-unit">°C</span>';
+  document.getElementById('tag-temp').innerHTML  = avgTemp.toFixed(1) + '<span class="tag-unit">C</span>';
 
-  // ── TABLE ──
   const tbody = document.getElementById('inv-table');
   tbody.innerHTML = latest.sort((a,b) => a.DeviceName.localeCompare(b.DeviceName)).map(r => {
     const w    = parseFloat(r.w || 0);
     const pc   = powerClass(w, maxPower);
     const stat = parseInt(r.Status) === 0 ? 'Online' : 'Offline';
     const dotC = parseInt(r.Status) === 0 ? 'var(--green)' : 'var(--red)';
-    return `<tr>
-      <td><b>${r.DeviceName}</b></td>
-      <td>${r.sitename}</td>
-      <td><span class="status-dot" style="background:${dotC}"></span>${stat}</td>
-      <td class="${pc}">${fmt(w)/1000}</td>
-      <td>${fmt(parseFloat(r.dkwh||0),2)}</td>
-      <td>${fmt(parseFloat(r.tkwh||0),2)}</td>
-      <td>${fmt(parseFloat(r.v||0),1)}</td>
-      <td>${fmt(parseFloat(r.i||0),2)}</td>
-      <td>${parseFloat(r.f||0).toFixed(1)}</td>
-      <td>${parseFloat(r.pf||0).toFixed(3)}</td>
-      <td class="${parseFloat(r.temp||0)>70?'power-low':parseFloat(r.temp||0)>60?'power-mid':'power-high'}">${parseFloat(r.temp||0).toFixed(1)}</td>
-      <td>${r.Timestamp||''}</td>
-    </tr>`;
+    return '<tr>' +
+      '<td><b>' + r.DeviceName + '</b></td>' +
+      '<td>' + r.sitename + '</td>' +
+      '<td><span class="status-dot" style="background:' + dotC + '"></span>' + stat + '</td>' +
+      '<td class="' + pc + '">' + (w/1000).toFixed(2) + '</td>' +
+      '<td>' + fmt(parseFloat(r.dkwh||0), 2) + '</td>' +
+      '<td>' + fmt(parseFloat(r.tkwh||0)/1000, 2) + '</td>' +
+      '<td>' + fmt(parseFloat(r.v||0), 1) + '</td>' +
+      '<td>' + fmt(parseFloat(r.i||0), 2) + '</td>' +
+      '<td>' + parseFloat(r.f||0).toFixed(1) + '</td>' +
+      '<td>' + parseFloat(r.pf||0).toFixed(3) + '</td>' +
+      '<td class="' + (parseFloat(r.temp||0)>70?'power-low':parseFloat(r.temp||0)>60?'power-mid':'power-high') + '">' + parseFloat(r.temp||0).toFixed(1) + '</td>' +
+      '<td>' + (r.Timestamp||'') + '</td>' +
+      '</tr>';
   }).join('');
 
-  // ── CHARTS ──
   const sorted = latest.sort((a,b) => a.DeviceName.localeCompare(b.DeviceName));
   const labels = sorted.map(r => r.DeviceName);
+  updateChart('chart-power', labels, sorted.map(r => parseFloat(r.w||0)));
+  updateChart('chart-temp',  labels, sorted.map(r => parseFloat(r.temp||0)));
+  updateChart('chart-dkwh',  labels, sorted.map(r => parseFloat(r.dkwh||0)));
+  updateChart('chart-tkwh',  labels, sorted.map(r => parseFloat(r.tkwh||0)/1000));
 
-  updateChart('chart-power', labels, sorted.map(r => parseFloat(r.w||0)),        '#00c2ff');
-  updateChart('chart-temp',  labels, sorted.map(r => parseFloat(r.temp||0)),             '#f59e0b');
-  updateChart('chart-dkwh',  labels, sorted.map(r => parseFloat(r.dkwh||0)/1000),        '#22c55e');
-  updateChart('chart-tkwh',  labels, sorted.map(r => parseFloat(r.tkwh||0)/1000),        '#a78bfa');
+  document.getElementById('last-update').textContent = 'Updated: ' + new Date().toLocaleTimeString('en-IN');
 
-  // update last-update
-  document.getElementById('last-update').textContent =
-    '↻ Updated: ' + new Date().toLocaleTimeString('en-IN');
+  checkAlerts(latest);
 }
 
-function updateChart(id, labels, data, baseColor) {
+function updateChart(id, labels, data) {
   const c = charts[id];
-  // color each bar green/yellow/red based on value vs max
   const maxVal = Math.max(...data);
   const colors = data.map(v => {
     const pct = maxVal > 0 ? v / maxVal : 0;
@@ -458,57 +379,87 @@ function updateChart(id, labels, data, baseColor) {
   c.data.labels = labels;
   c.data.datasets[0].data = data;
   c.data.datasets[0].backgroundColor = colors;
-  c.data.datasets[0].borderColor = colors.map(c => c.replace('cc',''));
+  c.data.datasets[0].borderColor = colors.map(x => x.replace('cc',''));
   c.update();
 }
 
 function fmt(n, dec=0) {
-  if (isNaN(n)) return '—';
+  if (isNaN(n)) return '-';
   return n.toLocaleString('en-IN', { maximumFractionDigits: dec });
 }
 
-// ── Status helpers ──
 function showLoading(msg) {
   const s = document.getElementById('status-bar');
   s.className = 'loading'; s.textContent = msg; s.style.display = 'block';
 }
 function showError(msg) {
   const s = document.getElementById('status-bar');
-  s.className = 'error'; s.textContent = '⚠ ' + msg; s.style.display = 'block';
+  s.className = 'error'; s.textContent = 'Error: ' + msg; s.style.display = 'block';
 }
 function hideStatus() {
   document.getElementById('status-bar').style.display = 'none';
 }
 
-// ── FETCH DATA ──
-async function fetchData() {
-  const url = document.getElementById('data-url').value.trim();
-  if (!url) { showError('Please enter your Google Script URL above.'); return; }
+// WhatsApp Alert
+async function sendWhatsApp(message) {
+  if (!WA_PHONE || !WA_APIKEY || WA_PHONE === "91XXXXXXXXXX") return;
+  const url = 'https://api.callmebot.com/whatsapp.php?phone=' + WA_PHONE +
+              '&text=' + encodeURIComponent(message) + '&apikey=' + WA_APIKEY;
+  try { await fetch(url, { mode: 'no-cors' }); } catch(e) {}
+}
 
-  showLoading('⏳ Fetching data...');
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    hideStatus();
-    const rows = parseCSV(text);
-    if (!rows.length) throw new Error('No data rows found');
-    render(rows);
-  } catch (e) {
-    showError('Error: ' + e.message + ' — Check URL or enable CORS in Google Script.');
+function checkAlerts(latest) {
+  const now = Date.now();
+  const zeroPower = [];
+  latest.forEach(r => {
+    const w = parseFloat(r.w || 0);
+    const dev = r.DeviceName;
+    if (w < WA_THRESHOLD) {
+      if (!alertedDevices[dev] || (now - alertedDevices[dev]) > 10 * 60 * 1000) {
+        alertedDevices[dev] = now;
+        zeroPower.push('- ' + dev + ' (' + r.sitename + '): ' + w + ' W');
+      }
+    } else {
+      delete alertedDevices[dev];
+    }
+  });
+  if (zeroPower.length > 0) {
+    sendWhatsApp('BIL Inverter Alert!\nPower below ' + WA_THRESHOLD + 'W:\n' +
+      zeroPower.join('\n') + '\nTime: ' + new Date().toLocaleString('en-IN'));
   }
 }
 
-// ── AUTO REFRESH every 60 seconds ──
-let secondsLeft = 60;
+async function fetchData() {
+  const url = DATA_URL;
+  if (!url || url === "TUMCHI_GOOGLE_SCRIPT_URL_ITHE_TAKA") {
+    showError("DATA_URL set kara - code madhe CHANGE 3 bagha");
+    return;
+  }
+  showLoading('Data fetch hoto ahe...');
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    hideStatus();
+    const rows = parseCSV(text);
+    if (!rows.length) throw new Error('Data nahi');
+    render(rows);
+  } catch(e) {
+    showError(e.message);
+  }
+}
+
+// Auto refresh
+let secondsLeft = REFRESH_SECONDS;
 setInterval(() => {
   secondsLeft--;
-  document.getElementById('countdown').textContent = `(auto-refresh in ${secondsLeft}s)`;
-  if (secondsLeft <= 0) {
-    secondsLeft = 60;
-    fetchData();
-  }
+  document.getElementById('countdown').textContent = '(refresh in ' + secondsLeft + 's)';
+  if (secondsLeft <= 0) { secondsLeft = REFRESH_SECONDS; fetchData(); }
 }, 1000);
+
+// Page load hotach data fetch kara
+fetchData();
+
 </script>
 </body>
 </html>
