@@ -186,8 +186,8 @@ tr:hover td { background: #0f2040; cursor: pointer; }
 <div id="sidebar">
   <div class="sidebar-logo">
     <div class="logo-icon">⚡</div>
-    <div class="brand">Bhageria Industries Limited</div>
-    <div class="sub">Energy Dashboard</div>
+    <div class="brand">BIL Monitor</div>
+    <div class="sub">Energy Dashboard v2</div>
   </div>
   <nav>
     <div class="nav-section">Main</div>
@@ -223,11 +223,7 @@ tr:hover td { background: #0f2040; cursor: pointer; }
     </div>
   </nav>
 
-  <div style="padding:12px 18px; border-top:1px solid var(--border)">
-    <div style="font-size:10px; color:var(--muted); margin-bottom:4px;">Data URL</div>
-    <input id="url-input" type="text" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:5px 8px;font-size:10px;font-family:'JetBrains Mono',monospace;" placeholder="Paste Google Script URL..." value="https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnQfIaxdNlGH82JzIrG65DdVcKoNHq_VUoGuiWS-BKvo9LmIxJwRDcJOrPsRISjnfWu-C1avirojWrtBEZQ_znz5ZU_YJbr9rKG0CyJ30zkeXaAxDcrmTtAxwksJ_zCPitkM6xK0OGUrIHUBE6SZbAZViweLeyiTrh3hTNDOgIbxpfqYD3oeuwdU21Hqi3wUVKMKT9E5SjFVXEINQ4Zhy_mQpGtFcwotzuob_Z0IVkutF5gEFTzrRtWf_9FI9GRGpyAGOTuSWvOXhYLRKhOlFSN7bRAUPg&lib=Mk9HQ0r3qGd7INt1EjCdzPJHe6fVZ7h-Z"/>
-    <button onclick="fetchData()" style="margin-top:6px;width:100%;background:var(--accent);color:#fff;border:none;border-radius:5px;padding:6px;font-size:11px;font-weight:600;cursor:pointer;">Load Data</button>
-  </div>
+
 </div>
 
 <!-- MAIN -->
@@ -404,7 +400,10 @@ tr:hover td { background: #0f2040; cursor: pointer; }
 <script>
 // ── CONFIG ──
 const REFRESH_SECONDS = 60;
-const DATA_URL_DEFAULT = document.getElementById('https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnTXOO1a9tXdlzWyQXJ5duJXskLAfyLaL_CcJJjsljf0JB-W-UiV-4ufCOUumjvxOeB131bSb9NMyO10kZNCKvr7ppBuSj2zv6xS3Sf6DjEjpU-LEH9nl9kz_kPx04S6N0EwEyUtLyEBBNwBV9qexkllM3XxI8nEQHFJdx7QBq1FUY5AFa_Fc2nV0m1TNDyfR4TVFGgHKhG_-pmKtQCnxRn-94BsLt69rfdMvrfY4L8YvxY5pBcNJF87o7nN8dMnK6l71LJkCO6ZN5HgUri52V-b3nis1g&lib=Mk9HQ0r3qGd7INt1EjCdzPJHe6fVZ7h-Z').value;
+// ============================================================
+// TUMCHI GOOGLE SCRIPT URL ITHE TAKA
+// ============================================================
+const DATA_URL_DEFAULT = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnTXOO1a9tXdlzWyQXJ5duJXskLAfyLaL_CcJJjsljf0JB-W-UiV-4ufCOUumjvxOeB131bSb9NMyO10kZNCKvr7ppBuSj2zv6xS3Sf6DjEjpU-LEH9nl9kz_kPx04S6N0EwEyUtLyEBBNwBV9qexkllM3XxI8nEQHFJdx7QBq1FUY5AFa_Fc2nV0m1TNDyfR4TVFGgHKhG_-pmKtQCnxRn-94BsLt69rfdMvrfY4L8YvxY5pBcNJF87o7nN8dMnK6l71LJkCO6ZN5HgUri52V-b3nis1g&lib=Mk9HQ0r3qGd7INt1EjCdzPJHe6fVZ7h-Z";
 
 let allRows = [];
 let latestInverters = [];
@@ -766,7 +765,7 @@ function switchInnerTab(group, tab) {
 
 // ── FETCH ──
 async function fetchData() {
-  const url = document.getElementById('url-input').value.trim() || DATA_URL_DEFAULT;
+  const url = DATA_URL_DEFAULT;
   const sb = document.getElementById('status-bar');
   sb.className = 'loading'; sb.textContent = 'Fetching data...'; sb.style.display = 'block';
   try {
