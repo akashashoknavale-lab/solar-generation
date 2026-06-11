@@ -3,463 +3,794 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Inverter Dashboard — BIL</title>
+<title>BIL Energy Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
-  :root {
-    --bg:        #0b0f1a;
-    --panel:     #111827;
-    --border:    #1e2d45;
-    --accent:    #00c2ff;
-    --green:     #22c55e;
-    --yellow:    #f59e0b;
-    --red:       #ef4444;
-    --text:      #e2e8f0;
-    --muted:     #64748b;
-    --card-h:    #0f172a;
-  }
+:root {
+  --bg: #060b14;
+  --sidebar: #0a1120;
+  --panel: #0e1829;
+  --card: #111f33;
+  --border: #1a2d47;
+  --accent: #3b82f6;
+  --accent2: #06b6d4;
+  --green: #22c55e;
+  --yellow: #f59e0b;
+  --red: #ef4444;
+  --purple: #a78bfa;
+  --text: #e2e8f0;
+  --muted: #4a6080;
+  --muted2: #7a96b8;
+  --sidebar-w: 220px;
+}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; display: flex; height: 100vh; overflow: hidden; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    min-height: 100vh;
-  }
+/* ── SIDEBAR ── */
+#sidebar {
+  width: var(--sidebar-w); background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  flex-shrink: 0; overflow-y: auto;
+}
+.sidebar-logo {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .brand { font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -.3px; }
+.sidebar-logo .sub { font-size: 10px; color: var(--muted2); margin-top: 2px; }
+.logo-icon { font-size: 22px; margin-bottom: 6px; }
 
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 28px;
-    border-bottom: 1px solid var(--border);
-    background: var(--panel);
-    position: sticky; top: 0; z-index: 100;
-  }
-  .logo { display: flex; align-items: center; gap: 10px; }
-  .logo-icon {
-    width: 36px; height: 36px;
-    background: linear-gradient(135deg, #00c2ff33, #00c2ff);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-  }
-  .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
-  .logo-sub  { font-size: 11px; color: var(--muted); }
-  .header-right { display: flex; align-items: center; gap: 16px; }
-  #last-update  { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
-  #refresh-btn {
-    background: var(--accent); color: #000;
-    border: none; border-radius: 6px;
-    padding: 7px 16px; font-size: 13px; font-weight: 600;
-    cursor: pointer; transition: opacity .2s;
-  }
-  #refresh-btn:hover { opacity: .85; }
-  .countdown { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
-  .url-bar {
-    display: flex; gap: 10px; align-items: center;
-    padding: 12px 28px;
-    background: #0d1423;
-    border-bottom: 1px solid var(--border);
-  }
-  .url-bar label { font-size: 12px; color: var(--muted); white-space: nowrap; }
-  .url-bar input {
-    flex: 1; background: var(--panel); border: 1px solid var(--border);
-    color: var(--text); border-radius: 6px;
-    padding: 7px 12px; font-size: 13px; font-family: 'JetBrains Mono', monospace;
-  }
-  .url-bar input:focus { outline: none; border-color: var(--accent); }
-  .url-bar button {
-    background: #1e3a5f; color: var(--accent);
-    border: 1px solid var(--accent); border-radius: 6px;
-    padding: 7px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
-  }
-  main { padding: 24px 28px; max-width: 1600px; margin: 0 auto; }
-  .tags {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 14px; margin-bottom: 24px;
-  }
-  .tag {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 12px; padding: 16px 20px;
-    position: relative; overflow: hidden;
-  }
-  .tag::before {
-    content: ''; position: absolute; top: 0; left: 0;
-    width: 3px; height: 100%; background: var(--accent);
-  }
-  .tag.green::before  { background: var(--green); }
-  .tag.yellow::before { background: var(--yellow); }
-  .tag.red::before    { background: var(--red); }
-  .tag.blue::before   { background: var(--accent); }
-  .tag.purple::before { background: #a78bfa; }
-  .tag-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 6px; }
-  .tag-value { font-size: 26px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; }
-  .tag-unit  { font-size: 13px; color: var(--muted); margin-left: 4px; font-weight: 400; }
-  .tag-sub   { font-size: 11px; color: var(--muted); margin-top: 5px; }
-  .section-title {
-    font-size: 13px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: .8px;
-    color: var(--muted); margin-bottom: 14px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .table-wrap {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 12px; overflow: hidden; margin-bottom: 28px;
-  }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  thead { background: var(--card-h); }
-  th {
-    padding: 11px 14px; text-align: left;
-    font-size: 11px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: .6px;
-    color: var(--muted); border-bottom: 1px solid var(--border);
-  }
-  td {
-    padding: 10px 14px; border-bottom: 1px solid #0d1623;
-    font-family: 'JetBrains Mono', monospace; font-size: 12px;
-  }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #0f1f35; }
-  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-  .power-high  { color: var(--green); }
-  .power-mid   { color: var(--yellow); }
-  .power-low   { color: var(--red); }
-  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 28px; }
-  @media (max-width: 900px) { .charts { grid-template-columns: 1fr; } }
-  .chart-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
-  .chart-title { font-size: 13px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
-  .chart-card canvas { max-height: 220px; }
-  #status-bar { text-align: center; padding: 12px; font-size: 13px; border-radius: 8px; margin-bottom: 18px; display: none; }
-  #status-bar.loading { background: #1e2d45; color: var(--accent); display: block; }
-  #status-bar.error   { background: #2d1111; color: var(--red); display: block; }
-  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; animation: pulse 1.5s infinite; }
-  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(.7); } }
+nav { padding: 12px 0; flex: 1; }
+.nav-section { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; padding: 10px 18px 4px; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 18px; font-size: 13px; font-weight: 500;
+  color: var(--muted2); cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all .15s; user-select: none;
+}
+.nav-item:hover { color: var(--text); background: #0f1e35; }
+.nav-item.active { color: var(--accent); background: #0f1e35; border-left-color: var(--accent); }
+.nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
+.nav-item.sub { padding-left: 44px; font-size: 12px; }
+.nav-item.sub.active { color: var(--accent2); border-left-color: var(--accent2); }
+
+.nav-group-toggle { cursor: pointer; }
+.nav-children { display: none; }
+.nav-children.open { display: block; }
+
+.sub-tabs { display: flex; gap: 0; margin: 8px 12px; background: var(--card); border-radius: 6px; padding: 3px; }
+.sub-tab { flex: 1; text-align: center; padding: 5px 0; font-size: 11px; font-weight: 600; cursor: pointer; border-radius: 4px; color: var(--muted2); transition: all .15s; }
+.sub-tab.active { background: var(--accent); color: #fff; }
+
+/* ── MAIN AREA ── */
+#main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 24px; border-bottom: 1px solid var(--border);
+  background: var(--sidebar); flex-shrink: 0;
+}
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.topbar-title { font-size: 15px; font-weight: 600; }
+.topbar-sub { font-size: 11px; color: var(--muted2); }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.6)} }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+#last-update { font-size: 11px; color: var(--muted2); font-family: 'JetBrains Mono', monospace; }
+#countdown { font-size: 11px; color: var(--muted); }
+#refresh-btn {
+  background: var(--accent); color: #fff; border: none;
+  border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: opacity .2s;
+}
+#refresh-btn:hover { opacity: .85; }
+
+.content { flex: 1; overflow-y: auto; padding: 22px 24px; }
+
+/* ── PAGES ── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── SUMMARY CARDS ── */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px 18px; position: relative; overflow: hidden; cursor: default;
+  transition: border-color .2s;
+}
+.card::before { content:''; position:absolute; top:0; left:0; width:3px; height:100%; }
+.card.blue::before { background: var(--accent); }
+.card.green::before { background: var(--green); }
+.card.yellow::before { background: var(--yellow); }
+.card.purple::before { background: var(--purple); }
+.card.cyan::before { background: var(--accent2); }
+.card.red::before { background: var(--red); }
+.card-label { font-size: 10px; color: var(--muted2); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
+.card-value { font-size: 24px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; }
+.card-unit { font-size: 12px; color: var(--muted2); margin-left: 3px; font-weight: 400; }
+.card-sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+/* ── SECTION TITLE ── */
+.sec { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--muted2); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; margin-top: 22px; }
+.sec::after { content:''; flex:1; height:1px; background: var(--border); }
+.sec:first-child { margin-top: 0; }
+
+/* ── CHARTS ── */
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+@media(max-width:900px){ .charts-grid { grid-template-columns: 1fr; } }
+.chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+.chart-card canvas { max-height: 220px; cursor: pointer; }
+.chart-title { font-size: 12px; font-weight: 600; color: var(--muted2); margin-bottom: 12px; }
+
+/* ── TABLES ── */
+.table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 20px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 600px; }
+thead { background: #0a1628; }
+th { padding: 9px 12px; text-align: left; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--muted2); border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 9px 12px; border-bottom: 1px solid #0d1828; font-family: 'JetBrains Mono', monospace; font-size: 11px; white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #0f2040; cursor: pointer; }
+.status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; }
+
+/* ── MODAL ── */
+#modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.75); z-index: 999;
+  align-items: center; justify-content: center;
+}
+#modal-overlay.open { display: flex; }
+#modal {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+  width: 90%; max-width: 900px; max-height: 85vh;
+  display: flex; flex-direction: column;
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.modal-title { font-size: 15px; font-weight: 700; }
+.modal-close { background: none; border: none; color: var(--muted2); font-size: 20px; cursor: pointer; line-height: 1; }
+.modal-close:hover { color: var(--red); }
+.modal-body { overflow-y: auto; padding: 20px; }
+
+/* ── INNER TABS ── */
+.inner-tabs { display: flex; gap: 4px; background: var(--bg); border-radius: 8px; padding: 3px; width: fit-content; margin-bottom: 18px; }
+.inner-tab { padding: 6px 16px; font-size: 12px; font-weight: 600; border-radius: 5px; cursor: pointer; color: var(--muted2); transition: all .15s; }
+.inner-tab.active { background: var(--accent); color: #fff; }
+
+/* ── STATUS ── */
+#status-bar { text-align: center; padding: 10px; font-size: 13px; border-radius: 8px; margin-bottom: 16px; display: none; }
+#status-bar.loading { background: #0f2040; color: var(--accent); display: block; }
+#status-bar.error { background: #2a0f0f; color: var(--red); display: block; }
+
+.pwr-high { color: var(--green); }
+.pwr-mid  { color: var(--yellow); }
+.pwr-low  { color: var(--red); }
+
+.badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+.badge-green { background: #14532d44; color: var(--green); }
+.badge-red   { background: #450f0f44; color: var(--red); }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">
-    <div class="logo-icon">&#9889;</div>
-    <div>
-      <!-- ============================================================
-           CHANGE 1: Dashboard Title ani Company Name
-           'Inverter Dashboard' ani 'BIL' tya jaghi tumcha naam taka
-           ============================================================ -->
-      <div class="logo-text">Inverter Dashboard</div>
-      <div class="logo-sub">BIL — Real-time Monitoring</div>
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">⚡</div>
+    <div class="brand">Bhageria Industries Limited</div>
+    <div class="sub">Energy Dashboard</div>
+  </div>
+  <nav>
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+      <span class="icon">📊</span> Dashboard
     </div>
-  </div>
-  <div class="header-right">
-    <span class="live-dot"></span>
-    <span id="last-update">Not loaded yet</span>
-    <span class="countdown" id="countdown"></span>
-    <button id="refresh-btn" onclick="fetchData()">&#8635; Refresh</button>
-  </div>
-</header>
 
-<!-- ============================================================
-     CHANGE 2: URL Bar - hi puri bar REMOVE karu shakta
-     DATA_URL khali hardcode kela ahe, tar hi bar lagat nahi
-     Hide karayla: style="display:none" add kara
-     ============================================================ -->
-<div class="url-bar" style="display:none;">
-  <label>Data URL:</label>
-  <input type="text" id="data-url" placeholder="URL..." value=""/>
-  <button onclick="fetchData()">Load Data</button>
+    <div class="nav-section">Data</div>
+    <div class="nav-item nav-group-toggle" onclick="toggleGroup('grp-inv')" id="nav-inv-parent">
+      <span class="icon">🔆</span> Inverter
+      <span style="margin-left:auto;font-size:10px" id="arr-inv">▼</span>
+    </div>
+    <div class="nav-children" id="grp-inv">
+      <div class="nav-item sub" onclick="showPage('inv-data')" id="nav-inv-data">
+        <span class="icon">📋</span> Data
+      </div>
+      <div class="nav-item sub" onclick="showPage('inv-report')" id="nav-inv-report">
+        <span class="icon">📈</span> Reports
+      </div>
+    </div>
+
+    <div class="nav-item nav-group-toggle" onclick="toggleGroup('grp-mfm')" id="nav-mfm-parent">
+      <span class="icon">⚡</span> MFM
+      <span style="margin-left:auto;font-size:10px" id="arr-mfm">▼</span>
+    </div>
+    <div class="nav-children" id="grp-mfm">
+      <div class="nav-item sub" onclick="showPage('mfm-data')" id="nav-mfm-data">
+        <span class="icon">📋</span> Data
+      </div>
+      <div class="nav-item sub" onclick="showPage('mfm-report')" id="nav-mfm-report">
+        <span class="icon">📈</span> Reports
+      </div>
+    </div>
+  </nav>
+
+  <div style="padding:12px 18px; border-top:1px solid var(--border)">
+    <div style="font-size:10px; color:var(--muted); margin-bottom:4px;">Data URL</div>
+    <input id="url-input" type="text" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:5px 8px;font-size:10px;font-family:'JetBrains Mono',monospace;" placeholder="Paste Google Script URL..." value="https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnQfIaxdNlGH82JzIrG65DdVcKoNHq_VUoGuiWS-BKvo9LmIxJwRDcJOrPsRISjnfWu-C1avirojWrtBEZQ_znz5ZU_YJbr9rKG0CyJ30zkeXaAxDcrmTtAxwksJ_zCPitkM6xK0OGUrIHUBE6SZbAZViweLeyiTrh3hTNDOgIbxpfqYD3oeuwdU21Hqi3wUVKMKT9E5SjFVXEINQ4Zhy_mQpGtFcwotzuob_Z0IVkutF5gEFTzrRtWf_9FI9GRGpyAGOTuSWvOXhYLRKhOlFSN7bRAUPg&lib=Mk9HQ0r3qGd7INt1EjCdzPJHe6fVZ7h-Z"/>
+    <button onclick="fetchData()" style="margin-top:6px;width:100%;background:var(--accent);color:#fff;border:none;border-radius:5px;padding:6px;font-size:11px;font-weight:600;cursor:pointer;">Load Data</button>
+  </div>
 </div>
 
-<main>
-  <div id="status-bar">Loading data...</div>
-
-  <div class="section-title">Live Summary</div>
-  <div class="tags">
-    <div class="tag blue">
-      <div class="tag-label">Total Inverters</div>
-      <div class="tag-value" id="tag-total">&#8212;</div>
-      <div class="tag-sub">Connected devices</div>
+<!-- MAIN -->
+<div id="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="live-dot"></span>
+      <div>
+        <div class="topbar-title" id="page-title">Dashboard</div>
+        <div class="topbar-sub" id="page-sub">Real-time Energy Monitoring</div>
+      </div>
     </div>
-    <div class="tag green">
-      <div class="tag-label">Total Power (W)</div>
-      <div class="tag-value" id="tag-power">&#8212;<span class="tag-unit">kW</span></div>
-      <div class="tag-sub">Combined output</div>
-    </div>
-    <div class="tag blue">
-      <div class="tag-label">Today Generation</div>
-      <div class="tag-value" id="tag-dkwh">&#8212;<span class="tag-unit">kWh</span></div>
-      <div class="tag-sub">dkwh sum</div>
-    </div>
-    <div class="tag purple">
-      <div class="tag-label">Total Generation</div>
-      <div class="tag-value" id="tag-tkwh">&#8212;<span class="tag-unit">MWh</span></div>
-      <div class="tag-sub">tkwh sum</div>
-    </div>
-    <div class="tag yellow">
-      <div class="tag-label">Avg Temperature</div>
-      <div class="tag-value" id="tag-temp">&#8212;<span class="tag-unit">&#176;C</span></div>
-      <div class="tag-sub">Across all inverters</div>
+    <div class="topbar-right">
+      <span id="last-update">Not loaded</span>
+      <span id="countdown"></span>
+      <button id="refresh-btn" onclick="fetchData()">↻ Refresh</button>
     </div>
   </div>
 
-  <div class="section-title">Inverter-wise Data</div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Device</th><th>Site</th><th>Status</th>
-          <th>Power (kW)</th><th>Today kWh</th><th>Total kWh</th>
-          <th>Voltage (V)</th><th>Current (A)</th>
-          <th>Freq (Hz)</th><th>PF</th><th>Temp (&#176;C)</th><th>Timestamp</th>
-        </tr>
-      </thead>
-      <tbody id="inv-table">
-        <tr><td colspan="12" style="text-align:center;color:var(--muted);padding:30px">Loading...</td></tr>
-      </tbody>
-    </table>
+  <div class="content">
+    <div id="status-bar"></div>
+
+    <!-- ═══════════════ DASHBOARD PAGE ═══════════════ -->
+    <div class="page active" id="page-dashboard">
+      <div class="sec">MFM Summary</div>
+      <div class="cards" id="mfm-cards">
+        <div class="card blue"><div class="card-label">Total MFM Power</div><div class="card-value" id="dc-mfm-power">—<span class="card-unit">kW</span></div><div class="card-sub">Import net power</div></div>
+        <div class="card cyan"><div class="card-label">Import Energy</div><div class="card-value" id="dc-mfm-import">—<span class="card-unit">kWh</span></div><div class="card-sub">Total imported</div></div>
+        <div class="card purple"><div class="card-label">Export Energy</div><div class="card-value" id="dc-mfm-export">—<span class="card-unit">kWh</span></div><div class="card-sub">Total exported</div></div>
+        <div class="card yellow"><div class="card-label">Avg PF</div><div class="card-value" id="dc-mfm-pf">—</div><div class="card-sub">Power Factor</div></div>
+      </div>
+
+      <div class="sec">Inverter Summary</div>
+      <div class="cards">
+        <div class="card green"><div class="card-label">Total Inverters</div><div class="card-value" id="dc-inv-count">—</div><div class="card-sub">Online devices</div></div>
+        <div class="card green"><div class="card-label">Today Generation</div><div class="card-value" id="dc-inv-dkwh">—<span class="card-unit">kWh</span></div><div class="card-sub">Sum of all inverters</div></div>
+        <div class="card purple"><div class="card-label">Total Generation</div><div class="card-value" id="dc-inv-tkwh">—<span class="card-unit">MWh</span></div><div class="card-sub">Lifetime</div></div>
+        <div class="card yellow"><div class="card-label">Avg Temperature</div><div class="card-value" id="dc-inv-temp">—<span class="card-unit">°C</span></div><div class="card-sub">Across inverters</div></div>
+      </div>
+
+      <div class="sec">Power by Inverter — Click bar to view details</div>
+      <div class="chart-card" style="margin-bottom:20px">
+        <canvas id="chart-dash-power" style="max-height:260px;cursor:pointer;"></canvas>
+      </div>
+
+      <div class="sec">All Inverters Overview</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Inverter</th><th>Site</th><th>Status</th><th>Power (kW)</th><th>Today kWh</th><th>Total MWh</th><th>Temp °C</th></tr>
+          </thead>
+          <tbody id="dash-inv-table">
+            <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════ INVERTER DATA PAGE ═══════════════ -->
+    <div class="page" id="page-inv-data">
+      <div class="inner-tabs">
+        <div class="inner-tab active" onclick="switchInnerTab('inv','data')">Data</div>
+        <div class="inner-tab" onclick="switchInnerTab('inv','strings')">String Currents</div>
+        <div class="inner-tab" onclick="switchInnerTab('inv','mppt')">MPPT Voltages</div>
+      </div>
+
+      <div id="invtab-data">
+        <div class="sec">Inverter Parameters</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Device</th><th>Site</th><th>Status</th><th>Voltage (V)</th><th>Current (A)</th><th>Power (kW)</th><th>Freq (Hz)</th><th>PF</th><th>Today kWh</th><th>Total kWh</th><th>Temp °C</th><th>Timestamp</th></tr>
+            </thead>
+            <tbody id="inv-data-table">
+              <tr><td colspan="12" style="text-align:center;color:var(--muted);padding:24px">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="invtab-strings" style="display:none">
+        <div class="sec">String Currents (s1–s32)</div>
+        <div class="table-wrap">
+          <table>
+            <thead id="str-thead"><tr><th>Device</th></tr></thead>
+            <tbody id="inv-strings-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="invtab-mppt" style="display:none">
+        <div class="sec">MPPT Voltages (mv1–mv5) & DC Input</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Device</th><th>Site</th><th>mv1</th><th>mv2</th><th>mv3</th><th>mv4</th><th>mv5</th><th>vin</th><th>iin</th><th>win</th></tr>
+            </thead>
+            <tbody id="inv-mppt-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ INVERTER REPORT PAGE ═══════════════ -->
+    <div class="page" id="page-inv-report">
+      <div class="sec">Inverter Reports</div>
+      <div class="charts-grid">
+        <div class="chart-card"><div class="chart-title">⚡ Power per Inverter (kW)</div><canvas id="chart-inv-power"></canvas></div>
+        <div class="chart-card"><div class="chart-title">🌡 Temperature (°C)</div><canvas id="chart-inv-temp"></canvas></div>
+        <div class="chart-card"><div class="chart-title">📅 Today's Generation (kWh)</div><canvas id="chart-inv-dkwh"></canvas></div>
+        <div class="chart-card"><div class="chart-title">🏭 Total Generation (MWh)</div><canvas id="chart-inv-tkwh"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ MFM DATA PAGE ═══════════════ -->
+    <div class="page" id="page-mfm-data">
+      <div class="inner-tabs">
+        <div class="inner-tab active" onclick="switchInnerTab('mfm','main')">Data</div>
+        <div class="inner-tab" onclick="switchInnerTab('mfm','phases')">Phase Detail</div>
+      </div>
+
+      <div id="mfmtab-main">
+        <div class="sec">MFM Parameters</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Device</th><th>Site</th><th>Vr (V)</th><th>Vy (V)</th><th>Vb (V)</th><th>Ir (A)</th><th>Iy (A)</th><th>Ib (A)</th><th>Total W (kW)</th><th>Import kWh</th><th>Export kWh</th><th>PF</th><th>Freq</th><th>Timestamp</th></tr>
+            </thead>
+            <tbody id="mfm-data-table">
+              <tr><td colspan="14" style="text-align:center;color:var(--muted);padding:24px">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="mfmtab-phases" style="display:none">
+        <div class="sec">Phase-wise Power (Wr, Wy, Wb)</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Device</th><th>Site</th><th>Wr (W)</th><th>Wy (W)</th><th>Wb (W)</th><th>W Total</th><th>Var</th><th>Wh</th><th>Vah</th><th>Varh</th><th>Timestamp</th></tr>
+            </thead>
+            <tbody id="mfm-phases-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ MFM REPORT PAGE ═══════════════ -->
+    <div class="page" id="page-mfm-report">
+      <div class="sec">MFM Reports</div>
+      <div class="charts-grid">
+        <div class="chart-card"><div class="chart-title">⚡ Power per MFM (kW)</div><canvas id="chart-mfm-power"></canvas></div>
+        <div class="chart-card"><div class="chart-title">📥 Import kWh per MFM</div><canvas id="chart-mfm-import"></canvas></div>
+        <div class="chart-card"><div class="chart-title">📤 Export kWh per MFM</div><canvas id="chart-mfm-export"></canvas></div>
+        <div class="chart-card"><div class="chart-title">⚡ Phase Voltages (Vr/Vy/Vb)</div><canvas id="chart-mfm-voltage"></canvas></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- INVERTER DETAIL MODAL -->
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div id="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Inverter Detail</div>
+      <button class="modal-close" onclick="document.getElementById('modal-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
   </div>
-// CHANGE 3: TUMCHI DATA URL ITHE TAKA
-  <div class="section-title">Performance Charts</div>
-  <div class="charts">
-    <div class="chart-card"><div class="chart-title">&#9889; Power per Inverter (W)</div><canvas id="chart-power"></canvas></div>
-    <div class="chart-card"><div class="chart-title">&#127777;&#65039; Temperature per Inverter (&#176;C)</div><canvas id="chart-temp"></canvas></div>
-    <div class="chart-card"><div class="chart-title">&#128197; Day Gen Inv (kWh)</div><canvas id="chart-dkwh"></canvas></div>
-    <div class="chart-card"><div class="chart-title">&#127981; Total Generation per Inverter (kWh)</div><canvas id="chart-tkwh"></canvas></div>
-  </div>
-</main>
+</div>
 
 <script>
-
-// ============================================================
-// CHANGE 3: TUMCHI DATA URL ITHE TAKA
-// Google Script chi puri URL khali paste kara
-// ============================================================
-const DATA_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnQfIaxdNlGH82JzIrG65DdVcKoNHq_VUoGuiWS-BKvo9LmIxJwRDcJOrPsRISjnfWu-C1avirojWrtBEZQ_znz5ZU_YJbr9rKG0CyJ30zkeXaAxDcrmTtAxwksJ_zCPitkM6xK0OGUrIHUBE6SZbAZViweLeyiTrh3hTNDOgIbxpfqYD3oeuwdU21Hqi3wUVKMKT9E5SjFVXEINQ4Zhy_mQpGtFcwotzuob_Z0IVkutF5gEFTzrRtWf_9FI9GRGpyAGOTuSWvOXhYLRKhOlFSN7bRAUPg&lib=Mk9HQ0r3qGd7INt1EjCdzPJHe6fVZ7h-Z";
-// Example:
-// const DATA_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=ABC123...";
-
-
-// ============================================================
-// CHANGE 4: WhatsApp Alert Settings
-// Phone number ani API Key ithe hardcode kara
-// Phone: country code sah, e.g. India = 91XXXXXXXXXX
-// API Key: CallMeBot ne dilela key
-// Threshold: ya Watts khali gele ki alert pathvaycha
-// ============================================================
-const WA_PHONE     = "91XXXXXXXXXX";   // <-- tumcha WhatsApp number
-const WA_APIKEY    = "XXXXXXX";        // <-- CallMeBot API Key
-const WA_THRESHOLD = 100;              // <-- ya Watts khali gele ki alert (0 = power band jhali)
-
-
-// ============================================================
-// CHANGE 5: Auto Refresh Interval
-// Kitya seconds la data refresh vhava?
-// Default: 60 seconds (1 minute)
-// ============================================================
+// ── CONFIG ──
 const REFRESH_SECONDS = 60;
+const DATA_URL_DEFAULT = document.getElementById('https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnTXOO1a9tXdlzWyQXJ5duJXskLAfyLaL_CcJJjsljf0JB-W-UiV-4ufCOUumjvxOeB131bSb9NMyO10kZNCKvr7ppBuSj2zv6xS3Sf6DjEjpU-LEH9nl9kz_kPx04S6N0EwEyUtLyEBBNwBV9qexkllM3XxI8nEQHFJdx7QBq1FUY5AFa_Fc2nV0m1TNDyfR4TVFGgHKhG_-pmKtQCnxRn-94BsLt69rfdMvrfY4L8YvxY5pBcNJF87o7nN8dMnK6l71LJkCO6ZN5HgUri52V-b3nis1g&lib=Mk9HQ0r3qGd7INt1EjCdzPJHe6fVZ7h-Z').value;
 
-
-// -- KHALI KAY PAN BADLAYCHI GARAJ NAHI --
-
+let allRows = [];
+let latestInverters = [];
+let latestMFMs = [];
 let charts = {};
-const alertedDevices = {};
+let secondsLeft = REFRESH_SECONDS;
 
-function initChart(id, label, color) {
-  const ctx = document.getElementById(id).getContext('2d');
-  if (charts[id]) charts[id].destroy();
-  charts[id] = new Chart(ctx, {
-    type: 'bar',
-    data: { labels: [], datasets: [{ label, data: [], backgroundColor: color + 'cc', borderColor: color, borderWidth: 1, borderRadius: 5 }] },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#1e2d45' } },
-        y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#1e2d45' } }
-      }
-    }
-  });
-}
-
-initChart('chart-power', 'Power (W)',  '#00c2ff');
-initChart('chart-temp',  'Temp (C)',   '#f59e0b');
-initChart('chart-dkwh',  'Today kWh', '#22c55e');
-initChart('chart-tkwh',  'Total kWh', '#a78bfa');
-
-function powerClass(w, maxW) {
-  const pct = maxW > 0 ? w / maxW : 0;
-  if (pct >= 0.6) return 'power-high';
-  if (pct >= 0.3) return 'power-mid';
-  return 'power-low';
-}
-
+// ── PARSE CSV ──
 function parseCSV(text) {
-  const lines = text.trim().split('\n');
+  const lines = text.trim().split('\n').filter(l => l.trim() && !l.trim().match(/^\d{4}-\d{2}-\d{2}$/));
+  if (!lines.length) return [];
   const headers = lines[0].split(',').map(h => h.trim());
   return lines.slice(1).map(line => {
     const vals = line.split(',');
     const obj = {};
-    headers.forEach((h, i) => obj[h] = vals[i] ? vals[i].trim() : '');
+    headers.forEach((h, i) => obj[h] = (vals[i] || '').trim());
     return obj;
-  });
+  }).filter(r => r.DeviceName);
 }
 
-function render(rows) {
-  const inv = rows.filter(r => r.DeviceType === 'Inverter');
-  if (!inv.length) { showError('No Inverter rows found.'); return; }
-
-  const latestMap = {};
-  inv.forEach(r => {
+function getLatest(rows, type) {
+  const map = {};
+  rows.filter(r => r.DeviceType === type).forEach(r => {
     const dev = r.DeviceName;
-    if (!latestMap[dev] || r.Timestamp > latestMap[dev].Timestamp)
-      latestMap[dev] = r;
+    if (!map[dev] || r.Timestamp > map[dev].Timestamp) map[dev] = r;
   });
-  const latest = Object.values(latestMap);
-
-  const totalPower = latest.reduce((s, r) => s + parseFloat(r.w || 0), 0);
-  const totalDkwh  = latest.reduce((s, r) => s + parseFloat(r.dkwh || 0), 0);
-  const totalTkwh  = latest.reduce((s, r) => s + parseFloat(r.tkwh || 0), 0);
-  const avgTemp    = latest.reduce((s, r) => s + parseFloat(r.temp || 0), 0) / latest.length;
-  const maxPower   = Math.max(...latest.map(r => parseFloat(r.w || 0)));
-
-  document.getElementById('tag-total').textContent = latest.length;
-  document.getElementById('tag-power').innerHTML = fmt(totalPower) + '<span class="tag-unit">KW</span>';
-  document.getElementById('tag-dkwh').innerHTML  = fmt(totalDkwh, 1) + '<span class="tag-unit">kWh</span>';
-  document.getElementById('tag-tkwh').innerHTML  = fmt(totalTkwh / 1000, 1) + '<span class="tag-unit">MWh</span>';
-  document.getElementById('tag-temp').innerHTML  = avgTemp.toFixed(1) + '<span class="tag-unit">C</span>';
-
-  const tbody = document.getElementById('inv-table');
-  tbody.innerHTML = latest.sort((a,b) => a.DeviceName.localeCompare(b.DeviceName)).map(r => {
-    const w    = parseFloat(r.w || 0);
-    const pc   = powerClass(w, maxPower);
-    const stat = parseInt(r.Status) === 0 ? 'Online' : 'Offline';
-    const dotC = parseInt(r.Status) === 0 ? 'var(--green)' : 'var(--red)';
-    return '<tr>' +
-      '<td><b>' + r.DeviceName + '</b></td>' +
-      '<td>' + r.sitename + '</td>' +
-      '<td><span class="status-dot" style="background:' + dotC + '"></span>' + stat + '</td>' +
-      '<td class="' + pc + '">' + (w/1000).toFixed(2) + '</td>' +
-      '<td>' + fmt(parseFloat(r.dkwh||0), 2) + '</td>' +
-      '<td>' + fmt(parseFloat(r.tkwh||0)/1000, 2) + '</td>' +
-      '<td>' + fmt(parseFloat(r.v||0), 1) + '</td>' +
-      '<td>' + fmt(parseFloat(r.i||0), 2) + '</td>' +
-      '<td>' + parseFloat(r.f||0).toFixed(1) + '</td>' +
-      '<td>' + parseFloat(r.pf||0).toFixed(3) + '</td>' +
-      '<td class="' + (parseFloat(r.temp||0)>70?'power-low':parseFloat(r.temp||0)>60?'power-mid':'power-high') + '">' + parseFloat(r.temp||0).toFixed(1) + '</td>' +
-      '<td>' + (r.Timestamp||'') + '</td>' +
-      '</tr>';
-  }).join('');
-
-  const sorted = latest.sort((a,b) => a.DeviceName.localeCompare(b.DeviceName));
-  const labels = sorted.map(r => r.DeviceName);
-  updateChart('chart-power', labels, sorted.map(r => parseFloat(r.w||0)));
-  updateChart('chart-temp',  labels, sorted.map(r => parseFloat(r.temp||0)));
-  updateChart('chart-dkwh',  labels, sorted.map(r => parseFloat(r.dkwh||0)));
-  updateChart('chart-tkwh',  labels, sorted.map(r => parseFloat(r.tkwh||0)/1000));
-
-  document.getElementById('last-update').textContent = 'Updated: ' + new Date().toLocaleTimeString('en-IN');
-
-  checkAlerts(latest);
+  return Object.values(map).sort((a,b) => a.DeviceName.localeCompare(b.DeviceName));
 }
 
-function updateChart(id, labels, data) {
-  const c = charts[id];
-  const maxVal = Math.max(...data);
-  const colors = data.map(v => {
-    const pct = maxVal > 0 ? v / maxVal : 0;
-    if (pct >= 0.6) return '#22c55ecc';
-    if (pct >= 0.3) return '#f59e0bcc';
-    return '#ef4444cc';
-  });
-  c.data.labels = labels;
-  c.data.datasets[0].data = data;
-  c.data.datasets[0].backgroundColor = colors;
-  c.data.datasets[0].borderColor = colors.map(x => x.replace('cc',''));
-  c.update();
+function n(v, d=2) { const f = parseFloat(v); return isNaN(f) ? 0 : f; }
+function fmt(v, d=2) { const f = parseFloat(v); if(isNaN(f)) return '—'; return f.toLocaleString('en-IN',{maximumFractionDigits:d}); }
+
+function powerColor(val, max) {
+  const p = max > 0 ? val/max : 0;
+  if (p >= 0.6) return '#22c55e';
+  if (p >= 0.3) return '#f59e0b';
+  return '#ef4444';
 }
 
-function fmt(n, dec=0) {
-  if (isNaN(n)) return '-';
-  return n.toLocaleString('en-IN', { maximumFractionDigits: dec });
-}
-
-function showLoading(msg) {
-  const s = document.getElementById('status-bar');
-  s.className = 'loading'; s.textContent = msg; s.style.display = 'block';
-}
-function showError(msg) {
-  const s = document.getElementById('status-bar');
-  s.className = 'error'; s.textContent = 'Error: ' + msg; s.style.display = 'block';
-}
-function hideStatus() {
-  document.getElementById('status-bar').style.display = 'none';
-}
-
-// WhatsApp Alert
-async function sendWhatsApp(message) {
-  if (!WA_PHONE || !WA_APIKEY || WA_PHONE === "91XXXXXXXXXX") return;
-  const url = 'https://api.callmebot.com/whatsapp.php?phone=' + WA_PHONE +
-              '&text=' + encodeURIComponent(message) + '&apikey=' + WA_APIKEY;
-  try { await fetch(url, { mode: 'no-cors' }); } catch(e) {}
-}
-
-function checkAlerts(latest) {
-  const now = Date.now();
-  const zeroPower = [];
-  latest.forEach(r => {
-    const w = parseFloat(r.w || 0);
-    const dev = r.DeviceName;
-    if (w < WA_THRESHOLD) {
-      if (!alertedDevices[dev] || (now - alertedDevices[dev]) > 10 * 60 * 1000) {
-        alertedDevices[dev] = now;
-        zeroPower.push('- ' + dev + ' (' + r.sitename + '): ' + w + ' W');
-      }
-    } else {
-      delete alertedDevices[dev];
+// ── CHART HELPER ──
+function makeChart(id, type, labels, datasets, options={}) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    type,
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: datasets.length > 1, labels: { color:'#7a96b8', font:{size:11} } } },
+      scales: {
+        x: { ticks:{color:'#4a6080',font:{size:10}}, grid:{color:'#1a2d47'} },
+        y: { ticks:{color:'#4a6080',font:{size:10}}, grid:{color:'#1a2d47'} }
+      },
+      ...options
     }
   });
-  if (zeroPower.length > 0) {
-    sendWhatsApp('BIL Inverter Alert!\nPower below ' + WA_THRESHOLD + 'W:\n' +
-      zeroPower.join('\n') + '\nTime: ' + new Date().toLocaleString('en-IN'));
+  return charts[id];
+}
+
+function barDataset(label, data, color) {
+  return { label, data, backgroundColor: data.map(v => color+'bb'), borderColor: color, borderWidth:1, borderRadius:5 };
+}
+
+// ── RENDER ALL ──
+function renderAll() {
+  latestInverters = getLatest(allRows, 'Inverter');
+  latestMFMs      = getLatest(allRows, 'MFM');
+  renderDashboard();
+  renderInvData();
+  renderMFMData();
+  renderInvReports();
+  renderMFMReports();
+  document.getElementById('last-update').textContent = 'Updated: ' + new Date().toLocaleTimeString('en-IN');
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  const inv = latestInverters;
+  const mfm = latestMFMs;
+
+  // MFM cards
+  const mfmPower = mfm.reduce((s,r) => s + n(r.w), 0);
+  const mfmImport = mfm.reduce((s,r) => s + n(r.ikwh), 0);
+  const mfmExport = mfm.reduce((s,r) => s + n(r.ekwh), 0);
+  const mfmPF = mfm.length ? mfm.reduce((s,r) => s + n(r.pf), 0) / mfm.length : 0;
+
+  document.getElementById('dc-mfm-power').innerHTML  = fmt(mfmPower/1000,1) + '<span class="card-unit">kW</span>';
+  document.getElementById('dc-mfm-import').innerHTML = fmt(mfmImport,0) + '<span class="card-unit">kWh</span>';
+  document.getElementById('dc-mfm-export').innerHTML = fmt(mfmExport,0) + '<span class="card-unit">kWh</span>';
+  document.getElementById('dc-mfm-pf').innerHTML     = fmt(mfmPF,3);
+
+  // Inverter cards
+  const totalDkwh = inv.reduce((s,r) => s + n(r.dkwh), 0);
+  const totalTkwh = inv.reduce((s,r) => s + n(r.tkwh), 0);
+  const avgTemp   = inv.length ? inv.reduce((s,r) => s + n(r.temp), 0) / inv.length : 0;
+  document.getElementById('dc-inv-count').textContent = inv.length;
+  document.getElementById('dc-inv-dkwh').innerHTML  = fmt(totalDkwh,1) + '<span class="card-unit">kWh</span>';
+  document.getElementById('dc-inv-tkwh').innerHTML  = fmt(totalTkwh/1000,1) + '<span class="card-unit">MWh</span>';
+  document.getElementById('dc-inv-temp').innerHTML  = fmt(avgTemp,1) + '<span class="card-unit">°C</span>';
+
+  // Bar chart — Power
+  const labels = inv.map(r => r.DeviceName);
+  const powers = inv.map(r => n(r.w)/1000);
+  const maxP = Math.max(...powers);
+  const colors = powers.map(v => powerColor(v, maxP));
+
+  if (charts['chart-dash-power']) charts['chart-dash-power'].destroy();
+  const ctx = document.getElementById('chart-dash-power');
+  if (ctx) {
+    charts['chart-dash-power'] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Power (kW)',
+          data: powers,
+          backgroundColor: colors.map(c => c+'bb'),
+          borderColor: colors,
+          borderWidth: 1, borderRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend:{display:false}, tooltip:{callbacks:{label: ctx => ctx.parsed.y.toFixed(2)+' kW'}} },
+        scales: {
+          x:{ticks:{color:'#4a6080',font:{size:10}},grid:{color:'#1a2d47'}},
+          y:{ticks:{color:'#4a6080',font:{size:10}},grid:{color:'#1a2d47'}}
+        },
+        onClick: (evt, elements) => {
+          if (elements.length > 0) {
+            const i = elements[0].index;
+            openInverterModal(inv[i]);
+          }
+        }
+      }
+    });
+  }
+
+  // Dashboard table
+  const tbody = document.getElementById('dash-inv-table');
+  tbody.innerHTML = inv.map(r => {
+    const w = n(r.w)/1000;
+    const pc = w > maxP*.6 ? 'pwr-high' : w > maxP*.3 ? 'pwr-mid' : 'pwr-low';
+    const online = parseInt(r.Status) === 0;
+    return `<tr onclick="openInverterModal(${JSON.stringify(JSON.stringify(r))})">
+      <td><b>${r.DeviceName}</b></td>
+      <td>${r.sitename||''}</td>
+      <td><span class="status-dot" style="background:${online?'var(--green)':'var(--red)'}"></span>
+          <span class="badge ${online?'badge-green':'badge-red'}">${online?'Online':'Offline'}</span></td>
+      <td class="${pc}">${fmt(w,2)}</td>
+      <td>${fmt(n(r.dkwh),2)}</td>
+      <td>${fmt(n(r.tkwh)/1000,2)}</td>
+      <td class="${n(r.temp)>70?'pwr-low':n(r.temp)>60?'pwr-mid':'pwr-high'}">${fmt(n(r.temp),1)}</td>
+    </tr>`;
+  }).join('');
+  // fix onclick for JSON
+  tbody.querySelectorAll('tr').forEach((tr, i) => {
+    tr.onclick = () => openInverterModal(inv[i]);
+  });
+}
+
+// ── INVERTER DATA ──
+function renderInvData() {
+  const inv = latestInverters;
+
+  // Main data table
+  document.getElementById('inv-data-table').innerHTML = inv.map(r => {
+    const online = parseInt(r.Status) === 0;
+    return `<tr onclick="openInverterModal_idx(${inv.indexOf(r)})">
+      <td><b>${r.DeviceName}</b></td><td>${r.sitename||''}</td>
+      <td><span class="status-dot" style="background:${online?'var(--green)':'var(--red)'}"></span>${online?'Online':'Offline'}</td>
+      <td>${fmt(n(r.v),1)}</td><td>${fmt(n(r.i),2)}</td>
+      <td>${fmt(n(r.w)/1000,2)}</td><td>${fmt(n(r.f),2)}</td>
+      <td>${fmt(n(r.pf),3)}</td><td>${fmt(n(r.dkwh),2)}</td>
+      <td>${fmt(n(r.tkwh),0)}</td>
+      <td class="${n(r.temp)>70?'pwr-low':n(r.temp)>60?'pwr-mid':'pwr-high'}">${fmt(n(r.temp),1)}</td>
+      <td>${r.Timestamp||''}</td>
+    </tr>`;
+  }).join('');
+
+  // String currents table
+  const strCols = Array.from({length:32},(_,i)=>`s${i+1}`);
+  const usedCols = strCols.filter(c => inv.some(r => n(r[c]) !== 0));
+  document.getElementById('str-thead').innerHTML = '<tr><th>Device</th>' + usedCols.map(c=>`<th>${c}</th>`).join('') + '</tr>';
+  document.getElementById('inv-strings-table').innerHTML = inv.map(r =>
+    `<tr><td><b>${r.DeviceName}</b></td>` + usedCols.map(c => {
+      const v = n(r[c]);
+      return `<td class="${v>10?'pwr-high':v>5?'pwr-mid':v>0?'pwr-low':''}">${v===0?'—':fmt(v,2)}</td>`;
+    }).join('') + '</tr>'
+  ).join('');
+
+  // MPPT
+  document.getElementById('inv-mppt-table').innerHTML = inv.map(r =>
+    `<tr><td><b>${r.DeviceName}</b></td><td>${r.sitename||''}</td>
+    ${[1,2,3,4,5].map(i=>`<td>${fmt(n(r['mv'+i]),1)}</td>`).join('')}
+    <td>${fmt(n(r.vin),1)}</td><td>${fmt(n(r.iin),2)}</td><td>${fmt(n(r.win),0)}</td>
+    </tr>`
+  ).join('');
+}
+
+// ── MFM DATA ──
+function renderMFMData() {
+  const mfm = latestMFMs;
+
+  document.getElementById('mfm-data-table').innerHTML = mfm.map(r =>
+    `<tr>
+      <td><b>${r.DeviceName}</b></td><td>${r.sitename||''}</td>
+      <td>${fmt(n(r.vr),1)}</td><td>${fmt(n(r.vy),1)}</td><td>${fmt(n(r.vb),1)}</td>
+      <td>${fmt(n(r.ir),2)}</td><td>${fmt(n(r.iy),2)}</td><td>${fmt(n(r.ib),2)}</td>
+      <td>${fmt(n(r.w)/1000,2)}</td>
+      <td>${fmt(n(r.ikwh),0)}</td><td>${fmt(n(r.ekwh),0)}</td>
+      <td>${fmt(n(r.pf),3)}</td><td>${fmt(n(r.f||r.freq),2)}</td>
+      <td>${r.Timestamp||''}</td>
+    </tr>`
+  ).join('');
+
+  document.getElementById('mfm-phases-table').innerHTML = mfm.map(r =>
+    `<tr>
+      <td><b>${r.DeviceName}</b></td><td>${r.sitename||''}</td>
+      <td>${fmt(n(r.wr),0)}</td><td>${fmt(n(r.wy),0)}</td><td>${fmt(n(r.wb),0)}</td>
+      <td>${fmt(n(r.w),0)}</td><td>${fmt(n(r.var||r.varh),0)}</td>
+      <td>${fmt(n(r.wh),0)}</td><td>${fmt(n(r.vah),0)}</td><td>${fmt(n(r.varh),0)}</td>
+      <td>${r.Timestamp||''}</td>
+    </tr>`
+  ).join('');
+}
+
+// ── INVERTER REPORTS ──
+function renderInvReports() {
+  const inv = latestInverters;
+  const labels = inv.map(r => r.DeviceName);
+  const powers = inv.map(r => n(r.w)/1000);
+  const maxP = Math.max(...powers);
+  const pColors = powers.map(v => powerColor(v/1000, maxP/1000));
+
+  makeChart('chart-inv-power', 'bar', labels, [{
+    label:'Power (kW)', data: powers,
+    backgroundColor: pColors.map(c=>c+'bb'), borderColor: pColors, borderWidth:1, borderRadius:5
+  }]);
+  makeChart('chart-inv-temp', 'bar', labels, [barDataset('Temp (°C)', inv.map(r=>n(r.temp)), '#f59e0b')]);
+  makeChart('chart-inv-dkwh', 'bar', labels, [barDataset('Today kWh', inv.map(r=>n(r.dkwh)), '#22c55e')]);
+  makeChart('chart-inv-tkwh', 'bar', labels, [barDataset('Total MWh', inv.map(r=>n(r.tkwh)/1000), '#a78bfa')]);
+}
+
+// ── MFM REPORTS ──
+function renderMFMReports() {
+  const mfm = latestMFMs;
+  const labels = mfm.map(r => r.DeviceName);
+
+  const mfmPowers = mfm.map(r => n(r.w)/1000);
+  const maxP = Math.max(...mfmPowers);
+  const pColors = mfmPowers.map(v => powerColor(v, maxP));
+
+  makeChart('chart-mfm-power', 'bar', labels, [{
+    label:'Power (kW)', data: mfmPowers,
+    backgroundColor: pColors.map(c=>c+'bb'), borderColor: pColors, borderWidth:1, borderRadius:5
+  }]);
+  makeChart('chart-mfm-import', 'bar', labels, [barDataset('Import kWh', mfm.map(r=>n(r.ikwh)), '#06b6d4')]);
+  makeChart('chart-mfm-export', 'bar', labels, [barDataset('Export kWh', mfm.map(r=>n(r.ekwh)), '#a78bfa')]);
+
+  // Grouped voltage chart
+  makeChart('chart-mfm-voltage', 'bar', labels, [
+    barDataset('Vr', mfm.map(r=>n(r.vr)), '#3b82f6'),
+    barDataset('Vy', mfm.map(r=>n(r.vy)), '#f59e0b'),
+    barDataset('Vb', mfm.map(r=>n(r.vb)), '#a78bfa'),
+  ]);
+}
+
+// ── MODAL ──
+function openInverterModal(row) {
+  if (typeof row === 'string') row = JSON.parse(row);
+  document.getElementById('modal-title').textContent = `⚡ ${row.DeviceName} — ${row.sitename||''}`;
+
+  const online = parseInt(row.Status) === 0;
+  const fields = [
+    ['Voltage (V)', n(row.v).toFixed(1)],
+    ['Current (A)', n(row.i).toFixed(2)],
+    ['Power (kW)',  (n(row.w)/1000).toFixed(2)],
+    ['Frequency',  n(row.f).toFixed(2)],
+    ['Power Factor', n(row.pf).toFixed(3)],
+    ['Today kWh',  n(row.dkwh).toFixed(2)],
+    ['Total kWh',  n(row.tkwh).toFixed(0)],
+    ['Temperature',n(row.temp).toFixed(1)+'°C'],
+    ['Status', online?'Online':'Offline'],
+    ['Timestamp', row.Timestamp||'—'],
+  ];
+
+  const mvs = [1,2,3,4,5].map(i => [`MPPT V${i}`, n(row['mv'+i]).toFixed(1)]).filter(([,v])=>v!=='0.0');
+  const strCols = Array.from({length:32},(_,i)=>`s${i+1}`).filter(c => n(row[c])!==0);
+  const strs = strCols.map(c => [c.toUpperCase(), n(row[c]).toFixed(2)]);
+
+  document.getElementById('modal-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px">
+      ${fields.map(([l,v]) => `
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+          <div style="font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">${l}</div>
+          <div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace">${v}</div>
+        </div>`).join('')}
+    </div>
+    ${mvs.length?`<div style="font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;margin-bottom:8px">MPPT Voltages</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      ${mvs.map(([l,v])=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;font-family:'JetBrains Mono',monospace"><span style="color:var(--muted2);font-size:10px">${l}<br></span>${v}V</div>`).join('')}
+    </div>`:''}
+    ${strs.length?`<div style="font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;margin-bottom:8px">String Currents</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${strs.map(([l,v])=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;font-family:'JetBrains Mono',monospace;color:var(--green)"><span style="color:var(--muted2);font-size:10px">${l}<br></span>${v}A</div>`).join('')}
+    </div>`:''}
+  `;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function openInverterModal_idx(i) { openInverterModal(latestInverters[i]); }
+function closeModal(e) { if (e.target === document.getElementById('modal-overlay')) document.getElementById('modal-overlay').classList.remove('open'); }
+
+// ── NAVIGATION ──
+const pageMeta = {
+  'dashboard':   { title:'Dashboard', sub:'Real-time Energy Overview' },
+  'inv-data':    { title:'Inverter Data', sub:'Live Inverter Parameters' },
+  'inv-report':  { title:'Inverter Reports', sub:'Charts & Analytics' },
+  'mfm-data':    { title:'MFM Data', sub:'Live MFM Parameters' },
+  'mfm-report':  { title:'MFM Reports', sub:'Charts & Analytics' },
+};
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const nav = document.getElementById('nav-'+id);
+  if (nav) nav.classList.add('active');
+  const meta = pageMeta[id] || {};
+  document.getElementById('page-title').textContent = meta.title || id;
+  document.getElementById('page-sub').textContent = meta.sub || '';
+  // open parent group
+  if (id.startsWith('inv')) { document.getElementById('grp-inv').classList.add('open'); document.getElementById('arr-inv').textContent = '▲'; }
+  if (id.startsWith('mfm')) { document.getElementById('grp-mfm').classList.add('open'); document.getElementById('arr-mfm').textContent = '▲'; }
+}
+
+function toggleGroup(id) {
+  const el = document.getElementById(id);
+  const arr = document.getElementById('arr-' + id.replace('grp-',''));
+  el.classList.toggle('open');
+  arr.textContent = el.classList.contains('open') ? '▲' : '▼';
+}
+
+function switchInnerTab(group, tab) {
+  const prefix = group + 'tab-';
+  document.querySelectorAll('[id^="'+prefix+'"]').forEach(el => el.style.display = 'none');
+  document.getElementById(prefix + tab).style.display = 'block';
+  // update tab buttons in current page
+  const page = document.getElementById('page-'+group+'-data');
+  if (page) {
+    page.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
+    const tabs = page.querySelectorAll('.inner-tab');
+    const map = {inv:{data:0,strings:1,mppt:2}, mfm:{main:0,phases:1}};
+    const idx = (map[group]||{})[tab];
+    if (tabs[idx]) tabs[idx].classList.add('active');
   }
 }
 
+// ── FETCH ──
 async function fetchData() {
-  const url = DATA_URL;
-  if (!url || url === "TUMCHI_GOOGLE_SCRIPT_URL_ITHE_TAKA") {
-    showError("DATA_URL set kara - code madhe CHANGE 3 bagha");
-    return;
-  }
-  showLoading('Data fetch hoto ahe...');
+  const url = document.getElementById('url-input').value.trim() || DATA_URL_DEFAULT;
+  const sb = document.getElementById('status-bar');
+  sb.className = 'loading'; sb.textContent = 'Fetching data...'; sb.style.display = 'block';
   try {
     const res = await fetch(url);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
-    hideStatus();
     const rows = parseCSV(text);
-    if (!rows.length) throw new Error('Data nahi');
-    render(rows);
+    if (!rows.length) throw new Error('No data found');
+    allRows = rows;
+    renderAll();
+    sb.style.display = 'none';
   } catch(e) {
-    showError(e.message);
+    sb.className = 'error'; sb.textContent = 'Error: ' + e.message;
   }
 }
 
-// Auto refresh
-let secondsLeft = REFRESH_SECONDS;
+// ── AUTO REFRESH ──
 setInterval(() => {
   secondsLeft--;
-  document.getElementById('countdown').textContent = '(refresh in ' + secondsLeft + 's)';
+  document.getElementById('countdown').textContent = `(${secondsLeft}s)`;
   if (secondsLeft <= 0) { secondsLeft = REFRESH_SECONDS; fetchData(); }
 }, 1000);
 
-// Page load hotach data fetch kara
 fetchData();
-
 </script>
 </body>
 </html>
