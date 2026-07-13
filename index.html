@@ -1,795 +1,605 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>BIL Energy Dashboard</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<meta charset="UTF-8">
+<title>Solar Fleet Performance — Actual vs Expected</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
-:root {
-  --bg: #060b14;
-  --sidebar: #0a1120;
-  --panel: #0e1829;
-  --card: #111f33;
-  --border: #1a2d47;
-  --accent: #3b82f6;
-  --accent2: #06b6d4;
-  --green: #22c55e;
-  --yellow: #f59e0b;
-  --red: #ef4444;
-  --purple: #a78bfa;
-  --text: #e2e8f0;
-  --muted: #4a6080;
-  --muted2: #7a96b8;
-  --sidebar-w: 220px;
-}
+  :root{
+    --bg:#0a0f18;
+    --bg-2:#0d1420;
+    --panel:#111a2b;
+    --panel-2:#141f34;
+    --border:#233150;
+    --border-soft:#1a2438;
+    --text:#eef2f8;
+    --muted:#8996b3;
+    --muted-2:#5f6c88;
+    --amber:#ffb020;
+    --amber-soft:#7a5a1e;
+    --teal:#38d6cf;
+    --teal-soft:#1c5a58;
+    --good:#3ddc84;
+    --bad:#ff5d5d;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 500px at 15% -10%, rgba(255,176,32,0.07), transparent 60%),
+      radial-gradient(900px 500px at 90% 0%, rgba(56,214,207,0.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:28px 32px 60px;
+    min-height:100vh;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  h1,h2,h3{font-family:'Space Grotesk',sans-serif; margin:0;}
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+  /* ---------- Header ---------- */
+  .header{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    flex-wrap:wrap; gap:20px;
+    border-bottom:1px solid var(--border-soft);
+    padding-bottom:20px; margin-bottom:22px;
+  }
+  .eyebrow{
+    color:var(--amber); font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+    letter-spacing:.14em; text-transform:uppercase; margin-bottom:8px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--amber); box-shadow:0 0 8px var(--amber);}
+  .header h1{font-size:28px; font-weight:700; letter-spacing:-0.01em;}
+  .header .sub{color:var(--muted); font-size:13.5px; margin-top:6px;}
+  .header-meta{display:flex; gap:26px; text-align:right;}
+  .header-meta .stat b{display:block; font-family:'Space Grotesk',sans-serif; font-size:22px; color:var(--text);}
+  .header-meta .stat span{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em;}
 
-/* ── SIDEBAR ── */
-#sidebar {
-  width: var(--sidebar-w); background: var(--sidebar);
-  border-right: 1px solid var(--border);
-  display: flex; flex-direction: column;
-  flex-shrink: 0; overflow-y: auto;
-}
-.sidebar-logo {
-  padding: 20px 18px 16px;
-  border-bottom: 1px solid var(--border);
-}
-.sidebar-logo .brand { font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -.3px; }
-.sidebar-logo .sub { font-size: 10px; color: var(--muted2); margin-top: 2px; }
-.logo-icon { font-size: 22px; margin-bottom: 6px; }
+  /* ---------- Filter bar ---------- */
+  .filters{
+    display:flex; flex-wrap:wrap; gap:12px; align-items:center;
+    background:var(--panel); border:1px solid var(--border-soft);
+    border-radius:var(--radius); padding:14px 16px; margin-bottom:22px;
+  }
+  .filters .grp{display:flex; flex-direction:column; gap:4px;}
+  .filters label{font-size:10.5px; color:var(--muted-2); text-transform:uppercase; letter-spacing:.08em; font-weight:600;}
+  .filters select{
+    background:var(--panel-2); color:var(--text); border:1px solid var(--border);
+    border-radius:7px; padding:7px 10px; font-size:13px; font-family:inherit; min-width:150px;
+    cursor:pointer;
+  }
+  .filters select:focus{outline:2px solid var(--amber); outline-offset:1px;}
+  .filters button{
+    background:transparent; color:var(--muted); border:1px solid var(--border);
+    border-radius:7px; padding:8px 14px; font-size:12.5px; cursor:pointer; align-self:flex-end;
+    font-family:inherit; transition:all .15s;
+  }
+  .filters button:hover{border-color:var(--amber); color:var(--amber);}
+  .filters .count{margin-left:auto; color:var(--muted); font-size:12.5px; align-self:flex-end; padding-bottom:8px;}
+  .filters .count b{color:var(--text);}
 
-nav { padding: 12px 0; flex: 1; }
-.nav-section { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; padding: 10px 18px 4px; }
+  /* ---------- KPI row ---------- */
+  .kpi-row{display:grid; grid-template-columns:1.2fr repeat(4,1fr); gap:14px; margin-bottom:22px;}
+  .card{
+    background:var(--panel); border:1px solid var(--border-soft); border-radius:var(--radius);
+    padding:16px 18px;
+  }
+  .kpi-label{font-size:11px; color:var(--muted-2); text-transform:uppercase; letter-spacing:.08em; font-weight:600; margin-bottom:10px;}
+  .kpi-value{font-family:'Space Grotesk',sans-serif; font-size:26px; font-weight:700;}
+  .kpi-sub{font-size:12px; color:var(--muted); margin-top:6px;}
+  .kpi-sub .pos{color:var(--good);}
+  .kpi-sub .neg{color:var(--bad);}
 
-.nav-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 18px; font-size: 13px; font-weight: 500;
-  color: var(--muted2); cursor: pointer;
-  border-left: 3px solid transparent;
-  transition: all .15s; user-select: none;
-}
-.nav-item:hover { color: var(--text); background: #0f1e35; }
-.nav-item.active { color: var(--accent); background: #0f1e35; border-left-color: var(--accent); }
-.nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
-.nav-item.sub { padding-left: 44px; font-size: 12px; }
-.nav-item.sub.active { color: var(--accent2); border-left-color: var(--accent2); }
+  .gauge-card{display:flex; align-items:center; gap:16px;}
+  .gauge-text{flex:1;}
+  .gauge-text .kpi-value{font-size:30px;}
 
-.nav-group-toggle { cursor: pointer; }
-.nav-children { display: none; }
-.nav-children.open { display: block; }
+  /* ---------- Panels / charts ---------- */
+  .grid-2{display:grid; grid-template-columns:1.4fr 1fr; gap:14px; margin-bottom:14px;}
+  .panel-title{font-size:13.5px; font-weight:600; margin-bottom:2px;}
+  .panel-sub{font-size:11.5px; color:var(--muted-2); margin-bottom:14px;}
+  .chart-wrap{position:relative;}
 
-.sub-tabs { display: flex; gap: 0; margin: 8px 12px; background: var(--card); border-radius: 6px; padding: 3px; }
-.sub-tab { flex: 1; text-align: center; padding: 5px 0; font-size: 11px; font-weight: 600; cursor: pointer; border-radius: 4px; color: var(--muted2); transition: all .15s; }
-.sub-tab.active { background: var(--accent); color: #fff; }
+  /* ---------- Table ---------- */
+  .table-card{overflow:hidden;}
+  .table-scroll{max-height:480px; overflow:auto; border-radius:8px; border:1px solid var(--border-soft);}
+  table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  thead th{
+    position:sticky; top:0; background:var(--panel-2); color:var(--muted);
+    text-align:left; padding:10px 12px; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.06em; cursor:pointer; user-select:none; border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  thead th:hover{color:var(--amber);}
+  thead th.sorted{color:var(--amber);}
+  tbody td{padding:9px 12px; border-bottom:1px solid var(--border-soft); white-space:nowrap; font-family:'IBM Plex Mono',monospace; font-size:12px;}
+  tbody td.name{font-family:'Inter',sans-serif; font-size:12.5px;}
+  tbody tr:hover{background:var(--panel-2);}
+  .badge{padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600;}
+  .badge.good{background:rgba(61,220,132,0.14); color:var(--good);}
+  .badge.bad{background:rgba(255,93,93,0.14); color:var(--bad);}
+  .badge.mid{background:rgba(255,176,32,0.14); color:var(--amber);}
 
-/* ── MAIN AREA ── */
-#main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  ::-webkit-scrollbar{width:10px; height:10px;}
+  ::-webkit-scrollbar-track{background:var(--bg-2);}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:6px;}
 
-.topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 24px; border-bottom: 1px solid var(--border);
-  background: var(--sidebar); flex-shrink: 0;
-}
-.topbar-left { display: flex; align-items: center; gap: 10px; }
-.topbar-title { font-size: 15px; font-weight: 600; }
-.topbar-sub { font-size: 11px; color: var(--muted2); }
-.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 1.5s infinite; }
-@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.6)} }
-.topbar-right { display: flex; align-items: center; gap: 12px; }
-#last-update { font-size: 11px; color: var(--muted2); font-family: 'JetBrains Mono', monospace; }
-#countdown { font-size: 11px; color: var(--muted); }
-#refresh-btn {
-  background: var(--accent); color: #fff; border: none;
-  border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600;
-  cursor: pointer; transition: opacity .2s;
-}
-#refresh-btn:hover { opacity: .85; }
-
-.content { flex: 1; overflow-y: auto; padding: 22px 24px; }
-
-/* ── PAGES ── */
-.page { display: none; }
-.page.active { display: block; }
-
-/* ── SUMMARY CARDS ── */
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 22px; }
-.card {
-  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-  padding: 16px 18px; position: relative; overflow: hidden; cursor: default;
-  transition: border-color .2s;
-}
-.card::before { content:''; position:absolute; top:0; left:0; width:3px; height:100%; }
-.card.blue::before { background: var(--accent); }
-.card.green::before { background: var(--green); }
-.card.yellow::before { background: var(--yellow); }
-.card.purple::before { background: var(--purple); }
-.card.cyan::before { background: var(--accent2); }
-.card.red::before { background: var(--red); }
-.card-label { font-size: 10px; color: var(--muted2); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
-.card-value { font-size: 24px; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1; }
-.card-unit { font-size: 12px; color: var(--muted2); margin-left: 3px; font-weight: 400; }
-.card-sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
-
-/* ── SECTION TITLE ── */
-.sec { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--muted2); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; margin-top: 22px; }
-.sec::after { content:''; flex:1; height:1px; background: var(--border); }
-.sec:first-child { margin-top: 0; }
-
-/* ── CHARTS ── */
-.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
-@media(max-width:900px){ .charts-grid { grid-template-columns: 1fr; } }
-.chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
-.chart-card canvas { max-height: 220px; cursor: pointer; }
-.chart-title { font-size: 12px; font-weight: 600; color: var(--muted2); margin-bottom: 12px; }
-
-/* ── TABLES ── */
-.table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 20px; overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 600px; }
-thead { background: #0a1628; }
-th { padding: 9px 12px; text-align: left; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--muted2); border-bottom: 1px solid var(--border); white-space: nowrap; }
-td { padding: 9px 12px; border-bottom: 1px solid #0d1828; font-family: 'JetBrains Mono', monospace; font-size: 11px; white-space: nowrap; }
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: #0f2040; cursor: pointer; }
-.status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; }
-
-/* ── MODAL ── */
-#modal-overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,.75); z-index: 999;
-  align-items: center; justify-content: center;
-}
-#modal-overlay.open { display: flex; }
-#modal {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
-  width: 90%; max-width: 900px; max-height: 85vh;
-  display: flex; flex-direction: column;
-}
-.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
-.modal-title { font-size: 15px; font-weight: 700; }
-.modal-close { background: none; border: none; color: var(--muted2); font-size: 20px; cursor: pointer; line-height: 1; }
-.modal-close:hover { color: var(--red); }
-.modal-body { overflow-y: auto; padding: 20px; }
-
-/* ── INNER TABS ── */
-.inner-tabs { display: flex; gap: 4px; background: var(--bg); border-radius: 8px; padding: 3px; width: fit-content; margin-bottom: 18px; }
-.inner-tab { padding: 6px 16px; font-size: 12px; font-weight: 600; border-radius: 5px; cursor: pointer; color: var(--muted2); transition: all .15s; }
-.inner-tab.active { background: var(--accent); color: #fff; }
-
-/* ── STATUS ── */
-#status-bar { text-align: center; padding: 10px; font-size: 13px; border-radius: 8px; margin-bottom: 16px; display: none; }
-#status-bar.loading { background: #0f2040; color: var(--accent); display: block; }
-#status-bar.error { background: #2a0f0f; color: var(--red); display: block; }
-
-.pwr-high { color: var(--green); }
-.pwr-mid  { color: var(--yellow); }
-.pwr-low  { color: var(--red); }
-
-.badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 600; }
-.badge-green { background: #14532d44; color: var(--green); }
-.badge-red   { background: #450f0f44; color: var(--red); }
-
-/* scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  @media (max-width:1100px){
+    .kpi-row{grid-template-columns:repeat(2,1fr);}
+    .grid-2{grid-template-columns:1fr;}
+  }
 </style>
 </head>
 <body>
 
-<!-- SIDEBAR -->
-<div id="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-icon">⚡</div>
-    <div class="brand">BIL Monitor</div>
-    <div class="sub">Energy Dashboard v2</div>
+<div class="header">
+  <div>
+    <div class="eyebrow"><span class="dot"></span>ASSET MONITORING · ACTUAL VS EXPECTED</div>
+    <h1>Solar Fleet Performance Dashboard</h1>
+    <div class="sub" id="subtitleText">Loading live Google Sheet data…</div>
   </div>
-  <nav>
-    <div class="nav-section">Main</div>
-    <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
-      <span class="icon">📊</span> Dashboard
-    </div>
-
-    <div class="nav-section">Data</div>
-    <div class="nav-item nav-group-toggle" onclick="toggleGroup('grp-inv')" id="nav-inv-parent">
-      <span class="icon">🔆</span> Inverter
-      <span style="margin-left:auto;font-size:10px" id="arr-inv">▼</span>
-    </div>
-    <div class="nav-children" id="grp-inv">
-      <div class="nav-item sub" onclick="showPage('inv-data')" id="nav-inv-data">
-        <span class="icon">📋</span> Data
-      </div>
-      <div class="nav-item sub" onclick="showPage('inv-report')" id="nav-inv-report">
-        <span class="icon">📈</span> Reports
-      </div>
-    </div>
-
-    <div class="nav-item nav-group-toggle" onclick="toggleGroup('grp-mfm')" id="nav-mfm-parent">
-      <span class="icon">⚡</span> MFM
-      <span style="margin-left:auto;font-size:10px" id="arr-mfm">▼</span>
-    </div>
-    <div class="nav-children" id="grp-mfm">
-      <div class="nav-item sub" onclick="showPage('mfm-data')" id="nav-mfm-data">
-        <span class="icon">📋</span> Data
-      </div>
-      <div class="nav-item sub" onclick="showPage('mfm-report')" id="nav-mfm-report">
-        <span class="icon">📈</span> Reports
-      </div>
-    </div>
-  </nav>
-
-
+  <div class="header-meta">
+    <div class="stat"><b id="metaSites">–</b><span>Plants</span></div>
+    <div class="stat"><b id="metaLocations">–</b><span>Locations</span></div>
+    <div class="stat"><b id="metaCapacity">–</b><span>DC Capacity (kWp)</span></div>
+    <div class="stat"><b id="metaRange">–</b><span>Period</span></div>
+  </div>
 </div>
 
-<!-- MAIN -->
-<div id="main">
-  <div class="topbar">
-    <div class="topbar-left">
-      <span class="live-dot"></span>
-      <div>
-        <div class="topbar-title" id="page-title">Dashboard</div>
-        <div class="topbar-sub" id="page-sub">Real-time Energy Monitoring</div>
-      </div>
-    </div>
-    <div class="topbar-right">
-      <span id="last-update">Not loaded</span>
-      <span id="countdown"></span>
-      <button id="refresh-btn" onclick="fetchData()">↻ Refresh</button>
+<div class="filters">
+  <div class="grp">
+    <label>Location</label>
+    <select id="fLocation"><option value="ALL">All locations</option></select>
+  </div>
+  <div class="grp">
+    <label>Plant</label>
+    <select id="fSite"><option value="ALL">All plants</option></select>
+  </div>
+  <div class="grp">
+    <label>Financial Year</label>
+    <select id="fFY"><option value="ALL">All years</option></select>
+  </div>
+  <div class="grp">
+    <label>Month</label>
+    <select id="fMonth"><option value="ALL">All months</option></select>
+  </div>
+  <button id="resetBtn">Reset filters</button>
+  <div class="count"><b id="rowCount">0</b>&nbsp;records matched</div>
+</div>
+
+<div class="kpi-row">
+  <div class="card gauge-card">
+    <svg id="gaugeSvg" width="86" height="86" viewBox="0 0 86 86"></svg>
+    <div class="gauge-text">
+      <div class="kpi-label">Overall Achievement</div>
+      <div class="kpi-value" id="kpiAchievement">–</div>
+      <div class="kpi-sub">Actual generation ÷ expected generation</div>
     </div>
   </div>
+  <div class="card">
+    <div class="kpi-label">Actual Generation</div>
+    <div class="kpi-value" id="kpiActualGen">–</div>
+    <div class="kpi-sub">kWh, filtered period</div>
+  </div>
+  <div class="card">
+    <div class="kpi-label">Expected Generation</div>
+    <div class="kpi-value" id="kpiExpectedGen">–</div>
+    <div class="kpi-sub">kWh, per plant design estimate</div>
+  </div>
+  <div class="card">
+    <div class="kpi-label">Performance Ratio</div>
+    <div class="kpi-value" id="kpiPR">–</div>
+    <div class="kpi-sub" id="kpiPRSub">Actual PR vs expected PR</div>
+  </div>
+  <div class="card">
+    <div class="kpi-label">Plant Availability</div>
+    <div class="kpi-value" id="kpiAvail">–</div>
+    <div class="kpi-sub">Average across matched rows</div>
+  </div>
+</div>
 
-  <div class="content">
-    <div id="status-bar"></div>
+<div class="grid-2">
+  <div class="card">
+    <div class="panel-title">Monthly Generation — Actual vs Expected</div>
+    <div class="panel-sub">Aggregated kWh across the current filter selection</div>
+    <div class="chart-wrap"><canvas id="chartGenTrend" height="260"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="panel-title">Performance Ratio Trend</div>
+    <div class="panel-sub">Actual PR vs expected PR, monthly average</div>
+    <div class="chart-wrap"><canvas id="chartPRTrend" height="260"></canvas></div>
+  </div>
+</div>
 
-    <!-- ═══════════════ DASHBOARD PAGE ═══════════════ -->
-    <div class="page active" id="page-dashboard">
-      <div class="sec">MFM Summary</div>
-      <div class="cards" id="mfm-cards">
-        <div class="card blue"><div class="card-label">Total MFM Power</div><div class="card-value" id="dc-mfm-power">—<span class="card-unit">kW</span></div><div class="card-sub">Import net power</div></div>
-        <div class="card cyan"><div class="card-label">Import Energy</div><div class="card-value" id="dc-mfm-import">—<span class="card-unit">kWh</span></div><div class="card-sub">Total imported</div></div>
-        <div class="card purple"><div class="card-label">Export Energy</div><div class="card-value" id="dc-mfm-export">—<span class="card-unit">kWh</span></div><div class="card-sub">Total exported</div></div>
-        <div class="card yellow"><div class="card-label">Avg PF</div><div class="card-value" id="dc-mfm-pf">—</div><div class="card-sub">Power Factor</div></div>
-      </div>
+<div class="grid-2">
+  <div class="card">
+    <div class="panel-title">Plant-wise Achievement</div>
+    <div class="panel-sub">Actual ÷ expected generation, ranked (100% line = on target)</div>
+    <div class="chart-wrap"><canvas id="chartPlantRank" height="320"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="panel-title">Location-wise Comparison</div>
+    <div class="panel-sub">Actual vs expected generation by project location</div>
+    <div class="chart-wrap"><canvas id="chartLocation" height="320"></canvas></div>
+  </div>
+</div>
 
-      <div class="sec">Inverter Summary</div>
-      <div class="cards">
-        <div class="card green"><div class="card-label">Total Inverters</div><div class="card-value" id="dc-inv-count">—</div><div class="card-sub">Online devices</div></div>
-        <div class="card green"><div class="card-label">Today Generation</div><div class="card-value" id="dc-inv-dkwh">—<span class="card-unit">kWh</span></div><div class="card-sub">Sum of all inverters</div></div>
-        <div class="card purple"><div class="card-label">Total Generation</div><div class="card-value" id="dc-inv-tkwh">—<span class="card-unit">MWh</span></div><div class="card-sub">Lifetime</div></div>
-        <div class="card yellow"><div class="card-label">Avg Temperature</div><div class="card-value" id="dc-inv-temp">—<span class="card-unit">°C</span></div><div class="card-sub">Across inverters</div></div>
-      </div>
-
-      <div class="sec">Power by Inverter — Click bar to view details</div>
-      <div class="chart-card" style="margin-bottom:20px">
-        <canvas id="chart-dash-power" style="max-height:260px;cursor:pointer;"></canvas>
-      </div>
-
-      <div class="sec">All Inverters Overview</div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Inverter</th><th>Site</th><th>Status</th><th>Power (kW)</th><th>Today kWh</th><th>Total MWh</th><th>Temp °C</th></tr>
-          </thead>
-          <tbody id="dash-inv-table">
-            <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ═══════════════ INVERTER DATA PAGE ═══════════════ -->
-    <div class="page" id="page-inv-data">
-      <div class="inner-tabs">
-        <div class="inner-tab active" onclick="switchInnerTab('inv','data')">Data</div>
-        <div class="inner-tab" onclick="switchInnerTab('inv','strings')">String Currents</div>
-        <div class="inner-tab" onclick="switchInnerTab('inv','mppt')">MPPT Voltages</div>
-      </div>
-
-      <div id="invtab-data">
-        <div class="sec">Inverter Parameters</div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Device</th><th>Site</th><th>Status</th><th>Voltage (V)</th><th>Current (A)</th><th>Power (kW)</th><th>Freq (Hz)</th><th>PF</th><th>Today kWh</th><th>Total kWh</th><th>Temp °C</th><th>Timestamp</th></tr>
-            </thead>
-            <tbody id="inv-data-table">
-              <tr><td colspan="12" style="text-align:center;color:var(--muted);padding:24px">Loading...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="invtab-strings" style="display:none">
-        <div class="sec">String Currents (s1–s32)</div>
-        <div class="table-wrap">
-          <table>
-            <thead id="str-thead"><tr><th>Device</th></tr></thead>
-            <tbody id="inv-strings-table"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="invtab-mppt" style="display:none">
-        <div class="sec">MPPT Voltages (mv1–mv5) & DC Input</div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Device</th><th>Site</th><th>mv1</th><th>mv2</th><th>mv3</th><th>mv4</th><th>mv5</th><th>vin</th><th>iin</th><th>win</th></tr>
-            </thead>
-            <tbody id="inv-mppt-table"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════════════ INVERTER REPORT PAGE ═══════════════ -->
-    <div class="page" id="page-inv-report">
-      <div class="sec">Inverter Reports</div>
-      <div class="charts-grid">
-        <div class="chart-card"><div class="chart-title">⚡ Power per Inverter (kW)</div><canvas id="chart-inv-power"></canvas></div>
-        <div class="chart-card"><div class="chart-title">🌡 Temperature (°C)</div><canvas id="chart-inv-temp"></canvas></div>
-        <div class="chart-card"><div class="chart-title">📅 Today's Generation (kWh)</div><canvas id="chart-inv-dkwh"></canvas></div>
-        <div class="chart-card"><div class="chart-title">🏭 Total Generation (MWh)</div><canvas id="chart-inv-tkwh"></canvas></div>
-      </div>
-    </div>
-
-    <!-- ═══════════════ MFM DATA PAGE ═══════════════ -->
-    <div class="page" id="page-mfm-data">
-      <div class="inner-tabs">
-        <div class="inner-tab active" onclick="switchInnerTab('mfm','main')">Data</div>
-        <div class="inner-tab" onclick="switchInnerTab('mfm','phases')">Phase Detail</div>
-      </div>
-
-      <div id="mfmtab-main">
-        <div class="sec">MFM Parameters</div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Device</th><th>Site</th><th>Vr (V)</th><th>Vy (V)</th><th>Vb (V)</th><th>Ir (A)</th><th>Iy (A)</th><th>Ib (A)</th><th>Total W (kW)</th><th>Import kWh</th><th>Export kWh</th><th>PF</th><th>Freq</th><th>Timestamp</th></tr>
-            </thead>
-            <tbody id="mfm-data-table">
-              <tr><td colspan="14" style="text-align:center;color:var(--muted);padding:24px">Loading...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="mfmtab-phases" style="display:none">
-        <div class="sec">Phase-wise Power (Wr, Wy, Wb)</div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Device</th><th>Site</th><th>Wr (W)</th><th>Wy (W)</th><th>Wb (W)</th><th>W Total</th><th>Var</th><th>Wh</th><th>Vah</th><th>Varh</th><th>Timestamp</th></tr>
-            </thead>
-            <tbody id="mfm-phases-table"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════════════ MFM REPORT PAGE ═══════════════ -->
-    <div class="page" id="page-mfm-report">
-      <div class="sec">MFM Reports</div>
-      <div class="charts-grid">
-        <div class="chart-card"><div class="chart-title">⚡ Power per MFM (kW)</div><canvas id="chart-mfm-power"></canvas></div>
-        <div class="chart-card"><div class="chart-title">📥 Import kWh per MFM</div><canvas id="chart-mfm-import"></canvas></div>
-        <div class="chart-card"><div class="chart-title">📤 Export kWh per MFM</div><canvas id="chart-mfm-export"></canvas></div>
-        <div class="chart-card"><div class="chart-title">⚡ Phase Voltages (Vr/Vy/Vb)</div><canvas id="chart-mfm-voltage"></canvas></div>
-      </div>
-    </div>
-
-  </div><!-- /content -->
-</div><!-- /main -->
-
-<!-- INVERTER DETAIL MODAL -->
-<div id="modal-overlay" onclick="closeModal(event)">
-  <div id="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="modal-title">Inverter Detail</div>
-      <button class="modal-close" onclick="document.getElementById('modal-overlay').classList.remove('open')">✕</button>
-    </div>
-    <div class="modal-body" id="modal-body"></div>
+<div class="card table-card">
+  <div class="panel-title">Plant × Month Detail</div>
+  <div class="panel-sub">Click a column header to sort. Reflects the filters above.</div>
+  <div class="table-scroll">
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th data-key="site">Plant</th>
+          <th data-key="location">Location</th>
+          <th data-key="fy">FY</th>
+          <th data-key="month_name">Month</th>
+          <th data-key="dc_capacity">DC Cap (kWp)</th>
+          <th data-key="actual_gen">Actual Gen (kWh)</th>
+          <th data-key="expected_gen">Expected Gen (kWh)</th>
+          <th data-key="achievement">Achievement %</th>
+          <th data-key="pr">PR %</th>
+          <th data-key="exp_pr">Exp PR %</th>
+          <th data-key="plant_avail">Plant Avail %</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
   </div>
 </div>
 
 <script>
-// ── CONFIG ──
-const REFRESH_SECONDS = 60;
-// ============================================================
-// TUMCHI GOOGLE SCRIPT URL ITHE TAKA
-// ============================================================
-const DATA_URL_DEFAULT = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnTXOO1a9tXdlzWyQXJ5duJXskLAfyLaL_CcJJjsljf0JB-W-UiV-4ufCOUumjvxOeB131bSb9NMyO10kZNCKvr7ppBuSj2zv6xS3Sf6DjEjpU-LEH9nl9kz_kPx04S6N0EwEyUtLyEBBNwBV9qexkllM3XxI8nEQHFJdx7QBq1FUY5AFa_Fc2nV0m1TNDyfR4TVFGgHKhG_-pmKtQCnxRn-94BsLt69rfdMvrfY4L8YvxY5pBcNJF87o7nN8dMnK6l71LJkCO6ZN5HgUri52V-b3nis1g&lib=Mk9HQ0r3qGd7INt1EjCdzPJHe6fVZ7h-Z";
+  // १. तुमची गुगल शीट आयडी इथे यशस्वीरीत्या जोडली आहे
+  const SPREADSHEET_ID = '1Y3cr91xEEQj86B9hXMYdpp6UU1a33-vlrFcWKkLRujg'; 
+  const SHEET_NAME = 'Sheet1'; 
 
-let allRows = [];
-let latestInverters = [];
-let latestMFMs = [];
-let charts = {};
-let secondsLeft = REFRESH_SECONDS;
+  let RAW_DATA = [];
+  let charts = {};
+  let currentSort = { key: 'site', asc: true };
 
-// ── PARSE CSV ──
-function parseCSV(text) {
-  const lines = text.trim().split('\n').filter(l => l.trim() && !l.trim().match(/^\d{4}-\d{2}-\d{2}$/));
-  if (!lines.length) return [];
-  const headers = lines[0].split(',').map(h => h.trim());
-  return lines.slice(1).map(line => {
-    const vals = line.split(',');
-    const obj = {};
-    headers.forEach((h, i) => obj[h] = (vals[i] || '').trim());
-    return obj;
-  }).filter(r => r.DeviceName);
-}
-
-function getLatest(rows, type) {
-  const map = {};
-  rows.filter(r => r.DeviceType === type).forEach(r => {
-    const dev = r.DeviceName;
-    if (!map[dev] || r.Timestamp > map[dev].Timestamp) map[dev] = r;
-  });
-  return Object.values(map).sort((a,b) => a.DeviceName.localeCompare(b.DeviceName));
-}
-
-function n(v, d=2) { const f = parseFloat(v); return isNaN(f) ? 0 : f; }
-function fmt(v, d=2) { const f = parseFloat(v); if(isNaN(f)) return '—'; return f.toLocaleString('en-IN',{maximumFractionDigits:d}); }
-
-function powerColor(val, max) {
-  const p = max > 0 ? val/max : 0;
-  if (p >= 0.6) return '#22c55e';
-  if (p >= 0.3) return '#f59e0b';
-  return '#ef4444';
-}
-
-// ── CHART HELPER ──
-function makeChart(id, type, labels, datasets, options={}) {
-  const ctx = document.getElementById(id);
-  if (!ctx) return;
-  if (charts[id]) charts[id].destroy();
-  charts[id] = new Chart(ctx, {
-    type,
-    data: { labels, datasets },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: datasets.length > 1, labels: { color:'#7a96b8', font:{size:11} } } },
-      scales: {
-        x: { ticks:{color:'#4a6080',font:{size:10}}, grid:{color:'#1a2d47'} },
-        y: { ticks:{color:'#4a6080',font:{size:10}}, grid:{color:'#1a2d47'} }
-      },
-      ...options
-    }
-  });
-  return charts[id];
-}
-
-function barDataset(label, data, color) {
-  return { label, data, backgroundColor: data.map(v => color+'bb'), borderColor: color, borderWidth:1, borderRadius:5 };
-}
-
-// ── RENDER ALL ──
-function renderAll() {
-  latestInverters = getLatest(allRows, 'Inverter');
-  latestMFMs      = getLatest(allRows, 'MFM');
-  renderDashboard();
-  renderInvData();
-  renderMFMData();
-  renderInvReports();
-  renderMFMReports();
-  document.getElementById('last-update').textContent = 'Updated: ' + new Date().toLocaleTimeString('en-IN');
-}
-
-// ── DASHBOARD ──
-function renderDashboard() {
-  const inv = latestInverters;
-  const mfm = latestMFMs;
-
-  // MFM cards
-  const mfmPower = mfm.reduce((s,r) => s + n(r.w), 0);
-  const mfmImport = mfm.reduce((s,r) => s + n(r.ikwh), 0);
-  const mfmExport = mfm.reduce((s,r) => s + n(r.ekwh), 0);
-  const mfmPF = mfm.length ? mfm.reduce((s,r) => s + n(r.pf), 0) / mfm.length : 0;
-
-  document.getElementById('dc-mfm-power').innerHTML  = fmt(mfmPower/1000,1) + '<span class="card-unit">kW</span>';
-  document.getElementById('dc-mfm-import').innerHTML = fmt(mfmImport,0) + '<span class="card-unit">kWh</span>';
-  document.getElementById('dc-mfm-export').innerHTML = fmt(mfmExport,0) + '<span class="card-unit">kWh</span>';
-  document.getElementById('dc-mfm-pf').innerHTML     = fmt(mfmPF,3);
-
-  // Inverter cards
-  const totalDkwh = inv.reduce((s,r) => s + n(r.dkwh), 0);
-  const totalTkwh = inv.reduce((s,r) => s + n(r.tkwh), 0);
-  const avgTemp   = inv.length ? inv.reduce((s,r) => s + n(r.temp), 0) / inv.length : 0;
-  document.getElementById('dc-inv-count').textContent = inv.length;
-  document.getElementById('dc-inv-dkwh').innerHTML  = fmt(totalDkwh,1) + '<span class="card-unit">kWh</span>';
-  document.getElementById('dc-inv-tkwh').innerHTML  = fmt(totalTkwh/1000,1) + '<span class="card-unit">MWh</span>';
-  document.getElementById('dc-inv-temp').innerHTML  = fmt(avgTemp,1) + '<span class="card-unit">°C</span>';
-
-  // Bar chart — Power
-  const labels = inv.map(r => r.DeviceName);
-  const powers = inv.map(r => n(r.w)/1000);
-  const maxP = Math.max(...powers);
-  const colors = powers.map(v => powerColor(v, maxP));
-
-  if (charts['chart-dash-power']) charts['chart-dash-power'].destroy();
-  const ctx = document.getElementById('chart-dash-power');
-  if (ctx) {
-    charts['chart-dash-power'] = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Power (kW)',
-          data: powers,
-          backgroundColor: colors.map(c => c+'bb'),
-          borderColor: colors,
-          borderWidth: 1, borderRadius: 5
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend:{display:false}, tooltip:{callbacks:{label: ctx => ctx.parsed.y.toFixed(2)+' kW'}} },
-        scales: {
-          x:{ticks:{color:'#4a6080',font:{size:10}},grid:{color:'#1a2d47'}},
-          y:{ticks:{color:'#4a6080',font:{size:10}},grid:{color:'#1a2d47'}}
-        },
-        onClick: (evt, elements) => {
-          if (elements.length > 0) {
-            const i = elements[0].index;
-            openInverterModal(inv[i]);
+  // गुगल शीटमधून थेट डेटा आणणारे फंक्शन
+  async function fetchGoogleSheetData() {
+    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+    
+    try {
+      const response = await fetch(url);
+      const text = await response.text();
+      
+      // Google API रिस्पॉन्स स्वच्छ करणे
+      const jsonText = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+      const data = JSON.parse(jsonText);
+      
+      const columns = data.table.cols.map(c => c.label || c.id);
+      
+      RAW_DATA = data.table.rows.map(row => {
+        let obj = {};
+        row.c.forEach((cell, i) => {
+          let colName = columns[i];
+          if (colName) {
+            obj[colName] = cell && cell.v !== null ? cell.v : null;
           }
-        }
-      }
+        });
+        
+        // डेटा टाईप्स नंबरमध्ये कन्व्हर्ट करणे
+        obj.dc_capacity = parseFloat(obj.dc_capacity) || 0;
+        obj.actual_gen = parseFloat(obj.actual_gen) || 0;
+        obj.expected_gen = parseFloat(obj.expected_gen) || 0;
+        obj.pr = parseFloat(obj.pr) || 0;
+        obj.exp_pr = parseFloat(obj.exp_pr) || 0;
+        obj.plant_avail = parseFloat(obj.plant_avail) || 0;
+        obj.month_num = parseInt(obj.month_num) || 1;
+        
+        return obj;
+      });
+
+      document.getElementById('subtitleText').innerText = "Live Connected Data Fleet";
+      initDashboard();
+
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      document.getElementById('subtitleText').innerText = "Error loading data. Please check Google Sheet sharing settings.";
+    }
+  }
+
+  function initDashboard() {
+    populateFilterDropdowns();
+    setupEventListeners();
+    updateDashboard();
+  }
+
+  function populateFilterDropdowns() {
+    const locations = [...new Set(RAW_DATA.map(d => d.location))].sort();
+    const sites = [...new Set(RAW_DATA.map(d => d.site))].sort();
+    const fys = [...new Set(RAW_DATA.map(d => d.fy))].sort();
+    const months = [...new Set(RAW_DATA.map(d => d.month_name))].sort((a,b) => {
+      let d1 = RAW_DATA.find(x => x.month_name === a);
+      let d2 = RAW_DATA.find(x => x.month_name === b);
+      return new Date(d1.month) - new Date(d2.month);
+    });
+
+    fillSelect('fLocation', locations);
+    fillSelect('fSite', sites);
+    fillSelect('fFY', fys);
+    fillSelect('fMonth', months);
+  }
+
+  function fillSelect(id, items) {
+    const el = document.getElementById(id);
+    const existingDefault = el.options[0];
+    el.innerHTML = '';
+    el.appendChild(existingDefault);
+    items.forEach(item => {
+      if(!item) return;
+      let opt = document.createElement('option');
+      opt.value = item; opt.innerText = item;
+      el.appendChild(opt);
     });
   }
 
-  // Dashboard table
-  const tbody = document.getElementById('dash-inv-table');
-  tbody.innerHTML = inv.map(r => {
-    const w = n(r.w)/1000;
-    const pc = w > maxP*.6 ? 'pwr-high' : w > maxP*.3 ? 'pwr-mid' : 'pwr-low';
-    const online = parseInt(r.Status) === 0;
-    return `<tr onclick="openInverterModal(${JSON.stringify(JSON.stringify(r))})">
-      <td><b>${r.DeviceName}</b></td>
-      <td>${r.sitename||''}</td>
-      <td><span class="status-dot" style="background:${online?'var(--green)':'var(--red)'}"></span>
-          <span class="badge ${online?'badge-green':'badge-red'}">${online?'Online':'Offline'}</span></td>
-      <td class="${pc}">${fmt(w,2)}</td>
-      <td>${fmt(n(r.dkwh),2)}</td>
-      <td>${fmt(n(r.tkwh)/1000,2)}</td>
-      <td class="${n(r.temp)>70?'pwr-low':n(r.temp)>60?'pwr-mid':'pwr-high'}">${fmt(n(r.temp),1)}</td>
-    </tr>`;
-  }).join('');
-  // fix onclick for JSON
-  tbody.querySelectorAll('tr').forEach((tr, i) => {
-    tr.onclick = () => openInverterModal(inv[i]);
-  });
-}
-
-// ── INVERTER DATA ──
-function renderInvData() {
-  const inv = latestInverters;
-
-  // Main data table
-  document.getElementById('inv-data-table').innerHTML = inv.map(r => {
-    const online = parseInt(r.Status) === 0;
-    return `<tr onclick="openInverterModal_idx(${inv.indexOf(r)})">
-      <td><b>${r.DeviceName}</b></td><td>${r.sitename||''}</td>
-      <td><span class="status-dot" style="background:${online?'var(--green)':'var(--red)'}"></span>${online?'Online':'Offline'}</td>
-      <td>${fmt(n(r.v),1)}</td><td>${fmt(n(r.i),2)}</td>
-      <td>${fmt(n(r.w)/1000,2)}</td><td>${fmt(n(r.f),2)}</td>
-      <td>${fmt(n(r.pf),3)}</td><td>${fmt(n(r.dkwh),2)}</td>
-      <td>${fmt(n(r.tkwh),0)}</td>
-      <td class="${n(r.temp)>70?'pwr-low':n(r.temp)>60?'pwr-mid':'pwr-high'}">${fmt(n(r.temp),1)}</td>
-      <td>${r.Timestamp||''}</td>
-    </tr>`;
-  }).join('');
-
-  // String currents table
-  const strCols = Array.from({length:32},(_,i)=>`s${i+1}`);
-  const usedCols = strCols.filter(c => inv.some(r => n(r[c]) !== 0));
-  document.getElementById('str-thead').innerHTML = '<tr><th>Device</th>' + usedCols.map(c=>`<th>${c}</th>`).join('') + '</tr>';
-  document.getElementById('inv-strings-table').innerHTML = inv.map(r =>
-    `<tr><td><b>${r.DeviceName}</b></td>` + usedCols.map(c => {
-      const v = n(r[c]);
-      return `<td class="${v>10?'pwr-high':v>5?'pwr-mid':v>0?'pwr-low':''}">${v===0?'—':fmt(v,2)}</td>`;
-    }).join('') + '</tr>'
-  ).join('');
-
-  // MPPT
-  document.getElementById('inv-mppt-table').innerHTML = inv.map(r =>
-    `<tr><td><b>${r.DeviceName}</b></td><td>${r.sitename||''}</td>
-    ${[1,2,3,4,5].map(i=>`<td>${fmt(n(r['mv'+i]),1)}</td>`).join('')}
-    <td>${fmt(n(r.vin),1)}</td><td>${fmt(n(r.iin),2)}</td><td>${fmt(n(r.win),0)}</td>
-    </tr>`
-  ).join('');
-}
-
-// ── MFM DATA ──
-function renderMFMData() {
-  const mfm = latestMFMs;
-
-  document.getElementById('mfm-data-table').innerHTML = mfm.map(r =>
-    `<tr>
-      <td><b>${r.DeviceName}</b></td><td>${r.sitename||''}</td>
-      <td>${fmt(n(r.vr),1)}</td><td>${fmt(n(r.vy),1)}</td><td>${fmt(n(r.vb),1)}</td>
-      <td>${fmt(n(r.ir),2)}</td><td>${fmt(n(r.iy),2)}</td><td>${fmt(n(r.ib),2)}</td>
-      <td>${fmt(n(r.w)/1000,2)}</td>
-      <td>${fmt(n(r.ikwh),0)}</td><td>${fmt(n(r.ekwh),0)}</td>
-      <td>${fmt(n(r.pf),3)}</td><td>${fmt(n(r.f||r.freq),2)}</td>
-      <td>${r.Timestamp||''}</td>
-    </tr>`
-  ).join('');
-
-  document.getElementById('mfm-phases-table').innerHTML = mfm.map(r =>
-    `<tr>
-      <td><b>${r.DeviceName}</b></td><td>${r.sitename||''}</td>
-      <td>${fmt(n(r.wr),0)}</td><td>${fmt(n(r.wy),0)}</td><td>${fmt(n(r.wb),0)}</td>
-      <td>${fmt(n(r.w),0)}</td><td>${fmt(n(r.var||r.varh),0)}</td>
-      <td>${fmt(n(r.wh),0)}</td><td>${fmt(n(r.vah),0)}</td><td>${fmt(n(r.varh),0)}</td>
-      <td>${r.Timestamp||''}</td>
-    </tr>`
-  ).join('');
-}
-
-// ── INVERTER REPORTS ──
-function renderInvReports() {
-  const inv = latestInverters;
-  const labels = inv.map(r => r.DeviceName);
-  const powers = inv.map(r => n(r.w)/1000);
-  const maxP = Math.max(...powers);
-  const pColors = powers.map(v => powerColor(v/1000, maxP/1000));
-
-  makeChart('chart-inv-power', 'bar', labels, [{
-    label:'Power (kW)', data: powers,
-    backgroundColor: pColors.map(c=>c+'bb'), borderColor: pColors, borderWidth:1, borderRadius:5
-  }]);
-  makeChart('chart-inv-temp', 'bar', labels, [barDataset('Temp (°C)', inv.map(r=>n(r.temp)), '#f59e0b')]);
-  makeChart('chart-inv-dkwh', 'bar', labels, [barDataset('Today kWh', inv.map(r=>n(r.dkwh)), '#22c55e')]);
-  makeChart('chart-inv-tkwh', 'bar', labels, [barDataset('Total MWh', inv.map(r=>n(r.tkwh)/1000), '#a78bfa')]);
-}
-
-// ── MFM REPORTS ──
-function renderMFMReports() {
-  const mfm = latestMFMs;
-  const labels = mfm.map(r => r.DeviceName);
-
-  const mfmPowers = mfm.map(r => n(r.w)/1000);
-  const maxP = Math.max(...mfmPowers);
-  const pColors = mfmPowers.map(v => powerColor(v, maxP));
-
-  makeChart('chart-mfm-power', 'bar', labels, [{
-    label:'Power (kW)', data: mfmPowers,
-    backgroundColor: pColors.map(c=>c+'bb'), borderColor: pColors, borderWidth:1, borderRadius:5
-  }]);
-  makeChart('chart-mfm-import', 'bar', labels, [barDataset('Import kWh', mfm.map(r=>n(r.ikwh)), '#06b6d4')]);
-  makeChart('chart-mfm-export', 'bar', labels, [barDataset('Export kWh', mfm.map(r=>n(r.ekwh)), '#a78bfa')]);
-
-  // Grouped voltage chart
-  makeChart('chart-mfm-voltage', 'bar', labels, [
-    barDataset('Vr', mfm.map(r=>n(r.vr)), '#3b82f6'),
-    barDataset('Vy', mfm.map(r=>n(r.vy)), '#f59e0b'),
-    barDataset('Vb', mfm.map(r=>n(r.vb)), '#a78bfa'),
-  ]);
-}
-
-// ── MODAL ──
-function openInverterModal(row) {
-  if (typeof row === 'string') row = JSON.parse(row);
-  document.getElementById('modal-title').textContent = `⚡ ${row.DeviceName} — ${row.sitename||''}`;
-
-  const online = parseInt(row.Status) === 0;
-  const fields = [
-    ['Voltage (V)', n(row.v).toFixed(1)],
-    ['Current (A)', n(row.i).toFixed(2)],
-    ['Power (kW)',  (n(row.w)/1000).toFixed(2)],
-    ['Frequency',  n(row.f).toFixed(2)],
-    ['Power Factor', n(row.pf).toFixed(3)],
-    ['Today kWh',  n(row.dkwh).toFixed(2)],
-    ['Total kWh',  n(row.tkwh).toFixed(0)],
-    ['Temperature',n(row.temp).toFixed(1)+'°C'],
-    ['Status', online?'Online':'Offline'],
-    ['Timestamp', row.Timestamp||'—'],
-  ];
-
-  const mvs = [1,2,3,4,5].map(i => [`MPPT V${i}`, n(row['mv'+i]).toFixed(1)]).filter(([,v])=>v!=='0.0');
-  const strCols = Array.from({length:32},(_,i)=>`s${i+1}`).filter(c => n(row[c])!==0);
-  const strs = strCols.map(c => [c.toUpperCase(), n(row[c]).toFixed(2)]);
-
-  document.getElementById('modal-body').innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px">
-      ${fields.map(([l,v]) => `
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px">
-          <div style="font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">${l}</div>
-          <div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace">${v}</div>
-        </div>`).join('')}
-    </div>
-    ${mvs.length?`<div style="font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;margin-bottom:8px">MPPT Voltages</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-      ${mvs.map(([l,v])=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;font-family:'JetBrains Mono',monospace"><span style="color:var(--muted2);font-size:10px">${l}<br></span>${v}V</div>`).join('')}
-    </div>`:''}
-    ${strs.length?`<div style="font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;margin-bottom:8px">String Currents</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      ${strs.map(([l,v])=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;font-family:'JetBrains Mono',monospace;color:var(--green)"><span style="color:var(--muted2);font-size:10px">${l}<br></span>${v}A</div>`).join('')}
-    </div>`:''}
-  `;
-  document.getElementById('modal-overlay').classList.add('open');
-}
-function openInverterModal_idx(i) { openInverterModal(latestInverters[i]); }
-function closeModal(e) { if (e.target === document.getElementById('modal-overlay')) document.getElementById('modal-overlay').classList.remove('open'); }
-
-// ── NAVIGATION ──
-const pageMeta = {
-  'dashboard':   { title:'Dashboard', sub:'Real-time Energy Overview' },
-  'inv-data':    { title:'Inverter Data', sub:'Live Inverter Parameters' },
-  'inv-report':  { title:'Inverter Reports', sub:'Charts & Analytics' },
-  'mfm-data':    { title:'MFM Data', sub:'Live MFM Parameters' },
-  'mfm-report':  { title:'MFM Reports', sub:'Charts & Analytics' },
-};
-
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  const nav = document.getElementById('nav-'+id);
-  if (nav) nav.classList.add('active');
-  const meta = pageMeta[id] || {};
-  document.getElementById('page-title').textContent = meta.title || id;
-  document.getElementById('page-sub').textContent = meta.sub || '';
-  // open parent group
-  if (id.startsWith('inv')) { document.getElementById('grp-inv').classList.add('open'); document.getElementById('arr-inv').textContent = '▲'; }
-  if (id.startsWith('mfm')) { document.getElementById('grp-mfm').classList.add('open'); document.getElementById('arr-mfm').textContent = '▲'; }
-}
-
-function toggleGroup(id) {
-  const el = document.getElementById(id);
-  const arr = document.getElementById('arr-' + id.replace('grp-',''));
-  el.classList.toggle('open');
-  arr.textContent = el.classList.contains('open') ? '▲' : '▼';
-}
-
-function switchInnerTab(group, tab) {
-  const prefix = group + 'tab-';
-  document.querySelectorAll('[id^="'+prefix+'"]').forEach(el => el.style.display = 'none');
-  document.getElementById(prefix + tab).style.display = 'block';
-  // update tab buttons in current page
-  const page = document.getElementById('page-'+group+'-data');
-  if (page) {
-    page.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
-    const tabs = page.querySelectorAll('.inner-tab');
-    const map = {inv:{data:0,strings:1,mppt:2}, mfm:{main:0,phases:1}};
-    const idx = (map[group]||{})[tab];
-    if (tabs[idx]) tabs[idx].classList.add('active');
+  function setupEventListeners() {
+    ['fLocation', 'fSite', 'fFY', 'fMonth'].forEach(id => {
+      document.getElementById(id).addEventListener('change', updateDashboard);
+    });
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      ['fLocation', 'fSite', 'fFY', 'fMonth'].forEach(id => document.getElementById(id).value = 'ALL');
+      updateDashboard();
+    });
+    document.querySelectorAll('#dataTable th').forEach(th => {
+      th.addEventListener('click', () => {
+        let key = th.getAttribute('data-key');
+        if(currentSort.key === key) currentSort.asc = !currentSort.asc;
+        else { currentSort.key = key; currentSort.asc = true; }
+        renderTable(getFilteredData());
+      });
+    });
   }
-}
 
-// ── FETCH ──
-async function fetchData() {
-  const url = DATA_URL_DEFAULT;
-  const sb = document.getElementById('status-bar');
-  sb.className = 'loading'; sb.textContent = 'Fetching data...'; sb.style.display = 'block';
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const text = await res.text();
-    const rows = parseCSV(text);
-    if (!rows.length) throw new Error('No data found');
-    allRows = rows;
-    renderAll();
-    sb.style.display = 'none';
-  } catch(e) {
-    sb.className = 'error'; sb.textContent = 'Error: ' + e.message;
+  function getFilteredData() {
+    const loc = document.getElementById('fLocation').value;
+    const site = document.getElementById('fSite').value;
+    const fy = document.getElementById('fFY').value;
+    const mon = document.getElementById('fMonth').value;
+
+    return RAW_DATA.filter(d => {
+      if(loc !== 'ALL' && d.location !== loc) return false;
+      if(site !== 'ALL' && d.site !== site) return false;
+      if(fy !== 'ALL' && d.fy !== fy) return false;
+      if(mon !== 'ALL' && d.month_name !== mon) return false;
+      return true;
+    });
   }
-}
 
-// ── AUTO REFRESH ──
-setInterval(() => {
-  secondsLeft--;
-  document.getElementById('countdown').textContent = `(${secondsLeft}s)`;
-  if (secondsLeft <= 0) { secondsLeft = REFRESH_SECONDS; fetchData(); }
-}, 1000);
+  function updateDashboard() {
+    const data = getFilteredData();
+    document.getElementById('rowCount').innerText = data.length;
+    renderMeta(data);
+    renderKPIs(data);
+    renderCharts(data);
+    renderTable(data);
+  }
 
-fetchData();
+  function renderMeta(data) {
+    const sites = new Set(data.map(d=>d.site)).size;
+    const locs = new Set(data.map(d=>d.location)).size;
+    const cap = new Set(data.map(d => `${d.site}_${d.dc_capacity}`));
+    let totalCap = 0;
+    cap.forEach(c => totalCap += parseFloat(c.split('_')[1]) || 0);
+
+    document.getElementById('metaSites').innerText = sites;
+    document.getElementById('metaLocations').innerText = locs;
+    document.getElementById('metaCapacity').innerText = totalCap.toLocaleString('en-IN', {maximumFractionDigits:1});
+
+    if(data.length) {
+      let sortedMonths = [...data].sort((a,b) => new Date(a.month) - new Date(b.month));
+      document.getElementById('metaRange').innerText = `${sortedMonths[0].month_name} - ${sortedMonths[sortedMonths.length-1].month_name}`;
+    } else {
+      document.getElementById('metaRange').innerText = '–';
+    }
+  }
+
+  function renderKPIs(data) {
+    let act = 0, exp = 0, prSum = 0, exprSum = 0, availSum = 0;
+    data.forEach(d => {
+      act += d.actual_gen; exp += d.expected_gen;
+      prSum += d.pr; exprSum += d.exp_pr; availSum += d.plant_avail;
+    });
+
+    let ach = exp > 0 ? (act / exp) * 100 : 0;
+    let avgPR = data.length ? (prSum / data.length) * 100 : 0;
+    let avgExpPR = data.length ? (exprSum / data.length) * 100 : 0;
+    let avgAvail = data.length ? (availSum / data.length) * 100 : 0;
+
+    document.getElementById('kpiAchievement').innerText = ach ? `${ach.toFixed(1)}%` : '–';
+    document.getElementById('kpiActualGen').innerText = act ? Math.round(act).toLocaleString('en-IN') : '–';
+    document.getElementById('kpiExpectedGen').innerText = exp ? Math.round(exp).toLocaleString('en-IN') : '–';
+    document.getElementById('kpiPR').innerText = avgPR ? `${avgPR.toFixed(1)}%` : '–';
+    document.getElementById('kpiAvail').innerText = avgAvail ? `${avgAvail.toFixed(1)}%` : '–';
+
+    let prDiff = avgPR - avgExpPR;
+    document.getElementById('kpiPRSub').innerHTML = data.length ? 
+      `Target expected: ${avgExpPR.toFixed(1)}% (${prDiff>=0 ? '<span class="pos">+' : '<span class="neg">'}${prDiff.toFixed(1)}%</span>)` : 'Actual PR vs expected';
+
+    drawGauge(ach);
+  }
+
+  function drawGauge(pct) {
+    const svg = document.getElementById('gaugeSvg');
+    svg.innerHTML = '';
+    let bounded = Math.min(Math.max(pct, 0), 125);
+    let r = 36, cx = 43, cy = 43;
+    let circ = 2 * Math.PI * r;
+    let strokeDash = (bounded / 100) * circ;
+    let color = pct >= 95 ? '#3ddc84' : (pct >= 85 ? '#ffb020' : '#ff5d5d');
+
+    svg.innerHTML = `
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#233150" stroke-width="6.5"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="6.5" 
+              stroke-dasharray="${strokeDash} ${circ}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"/>
+    `;
+  }
+
+  function renderCharts(data) {
+    let trendMap = {};
+    data.forEach(d => {
+      if(!trendMap[d.month_name]) trendMap[d.month_name] = { act:0, exp:0, pr:0, expr:0, count:0, date: new Date(d.month) };
+      trendMap[d.month_name].act += d.actual_gen;
+      trendMap[d.month_name].exp += d.expected_gen;
+      trendMap[d.month_name].pr += d.pr;
+      trendMap[d.month_name].expr += d.exp_pr;
+      trendMap[d.month_name].count++;
+    });
+    let sortedMonths = Object.keys(trendMap).sort((a,b) => trendMap[a].date - trendMap[b].date);
+
+    let tLabels = [], tAct = [], tExp = [], tPR = [], tExpPR = [];
+    sortedMonths.forEach(m => {
+      tLabels.push(m);
+      tAct.push(Math.round(trendMap[m].act));
+      tExp.push(Math.round(trendMap[m].exp));
+      tPR.push((trendMap[m].pr / trendMap[m].count)*100);
+      tExpPR.push((trendMap[m].expr / trendMap[m].count)*100);
+    });
+
+    let plantMap = {};
+    data.forEach(d => {
+      if(!plantMap[d.site]) plantMap[d.site] = { act:0, exp:0 };
+      plantMap[d.site].act += d.actual_gen;
+      plantMap[d.site].exp += d.expected_gen;
+    });
+    let plantRank = Object.keys(plantMap).map(k => {
+      return { site: k, ach: plantMap[k].exp > 0 ? (plantMap[k].act / plantMap[k].exp)*100 : 0 }
+    }).sort((a,b) => b.ach - a.ach);
+
+    let locMap = {};
+    data.forEach(d => {
+      if(!locMap[d.location]) locMap[d.location] = { act:0, exp:0 };
+      locMap[d.location].act += d.actual_gen;
+      locMap[d.location].exp += d.expected_gen;
+    });
+    let locLabels = Object.keys(locMap).sort();
+
+    // Chart 1: Gen Trend
+    if(charts.gen) charts.gen.destroy();
+    charts.gen = new Chart(document.getElementById('chartGenTrend'), {
+      type: 'bar',
+      data: {
+        labels: tLabels,
+        datasets: [
+          { label: 'Actual Gen', data: tAct, backgroundColor: '#38d6cf', borderRadius:4 },
+          { label: 'Expected Gen', data: tExp, backgroundColor: '#233150', borderRadius:4 }
+        ]
+      },
+      options: getChartOptions()
+    });
+
+    // Chart 2: PR Trend
+    if(charts.pr) charts.pr.destroy();
+    charts.pr = new Chart(document.getElementById('chartPRTrend'), {
+      type: 'line',
+      data: {
+        labels: tLabels,
+        datasets: [
+          { label: 'Actual PR', data: tPR, borderColor: '#3ddc84', tension:0.15, borderWidth:2.5, pointRadius:3 },
+          { label: 'Expected PR', data: tExpPR, borderColor: '#5f6c88', borderDash:[5,5], tension:0, pointRadius:0 }
+        ]
+      },
+      options: getChartOptions('%')
+    });
+
+    // Chart 3: Plant Achievement
+    if(charts.plant) charts.plant.destroy();
+    charts.plant = new Chart(document.getElementById('chartPlantRank'), {
+      type: 'bar',
+      data: {
+        labels: plantRank.map(p => p.site),
+        datasets: [{ label: 'Achievement %', data: plantRank.map(p=>p.ach), backgroundColor: '#ffb020', borderRadius:4 }]
+      },
+      options: getChartOptions('%')
+    });
+
+    // Chart 4: Location Comparison
+    if(charts.loc) charts.loc.destroy();
+    charts.loc = new Chart(document.getElementById('chartLocation'), {
+      type: 'bar',
+      data: {
+        labels: locLabels,
+        datasets: [
+          { label: 'Actual', data: locLabels.map(l => locMap[l].act), backgroundColor: '#38d6cf', borderRadius:4 },
+          { label: 'Expected', data: locLabels.map(l => locMap[l].exp), backgroundColor: '#233150', borderRadius:4 }
+        ]
+      },
+      options: getChartOptions()
+    });
+  }
+
+  function getChartOptions(suffix='') {
+    return {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#8996b3', font: { size:11 } } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#5f6c88', font:{size:10} } },
+        y: { 
+          grid: { color: '#1a2438' }, 
+          ticks: { 
+            color: '#5f6c88', font:{size:10},
+            callback: function(val) { return suffix ? val.toFixed(0)+suffix : (val >= 1e5 ? (val/1e3).toFixed(0)+'k' : val); }
+          } 
+        }
+      }
+    };
+  }
+
+  function renderTable(data) {
+    let k = currentSort.key;
+    let asc = currentSort.asc;
+
+    data.sort((a,b) => {
+      let va = a[k], vb = b[k];
+      if(k === 'achievement') {
+        va = a.expected_gen > 0 ? a.actual_gen / a.expected_gen : 0;
+        vb = b.expected_gen > 0 ? b.actual_gen / b.expected_gen : 0;
+      }
+      if(typeof va === 'string') return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+      return asc ? va - vb : vb - va;
+    });
+
+    document.querySelectorAll('#dataTable th').forEach(th => {
+      th.classList.remove('sorted');
+      if(th.getAttribute('data-key') === k) th.classList.add('sorted');
+    });
+
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+
+    data.forEach(d => {
+      let ach = d.expected_gen > 0 ? (d.actual_gen / d.expected_gen)*100 : 0;
+      let badgeClass = ach >= 98 ? 'good' : (ach >= 90 ? 'mid' : 'bad');
+
+      let tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="name" style="color:#fff; font-weight:500;">${d.site}</td>
+        <td>${d.location}</td>
+        <td>${d.fy}</td>
+        <td>${d.month_name}</td>
+        <td>${d.dc_capacity.toFixed(1)}</td>
+        <td>${Math.round(d.actual_gen).toLocaleString('en-IN')}</td>
+        <td>${Math.round(d.expected_gen).toLocaleString('en-IN')}</td>
+        <td><span class="badge ${badgeClass}">${ach.toFixed(1)}%</span></td>
+        <td>${(d.pr*100).toFixed(1)}%</td>
+        <td>${(d.exp_pr*100).toFixed(1)}%</td>
+        <td>${(d.plant_avail*100).toFixed(1)}%</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  window.addEventListener('DOMContentLoaded', fetchGoogleSheetData);
 </script>
+
 </body>
 </html>
